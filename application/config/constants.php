@@ -36,8 +36,10 @@ define('FOPEN_READ_WRITE_CREATE',				'a+b');
 define('FOPEN_WRITE_CREATE_STRICT',				'xb');
 define('FOPEN_READ_WRITE_CREATE_STRICT',		'x+b');
 
-define('LOG_FILE_AUTO_DELETE_DATE', 30); // Áö³­ ·Î±× »èÁ¦ÇÒ ÀÏÀÚ (30ÀÏÈÄ ·Î±× »èÁ¦)
+define('LOG_FILE_AUTO_DELETE_DATE', 30); // ï¿½ï¿½ï¿½ï¿½ ï¿½Î±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (30ï¿½ï¿½ï¿½ï¿½ ï¿½Î±ï¿½ ï¿½ï¿½ï¿½ï¿½)
 define('RES_CODE_SUCCESS','0000');
+define('ERR_CODE_POST','0001');
+define('ERR_CODE_JSON','0002');
 
 // COUNT OF ENTITY ARRAY
 define('COUNT_OF_ORDER','38');
@@ -50,9 +52,13 @@ define('COUNT_OF_COUPON','19');
 // EWHACOOP ESHOP DEPARTMENT_CODE
 define('EWHACOOP_ESHOP_DEPARTMENT_CODE','7000100');
 
-define('AES_KEY', 'toapi_gftpre_card');//AES ¾ÏÈ£È­ Å°:makebot.ai¸¦ AES256 º¯È¯°ª
+define('AES_KEY', 'toapi_gftpre_card');//AES ï¿½ï¿½È£È­ Å°:makebot.aiï¿½ï¿½ AES256 ï¿½ï¿½È¯ï¿½ï¿½
 define('KEY_128', substr(AES_KEY, 0, 128 / 8));
 define('KEY_256', substr(AES_KEY, 0, 256 / 8));
+
+define('TEST_URL', 'https://testapi.kiwoompaypos.co.kr/api/SaleReceipt/sales?searchDate=');
+define('TEST_AUTH', 'Y2VnbTlXdDNlZUlnL3h4M0xsaXFvQT09OmhScXNGeEVSSWJiUmdjQmh4RFZJL1E9PQ==');
+define('CAMPUS', '001');
 
 /* End of file constants.php */
 /* Location: ./application/config/constants.php */

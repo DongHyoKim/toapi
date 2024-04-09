@@ -12,7 +12,7 @@ class Api extends CT_Controller {
     public function index(){
     }
 
-    //ÁÖ¹®Á¤º¸ receive api
+    //ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ receive api
     public function receivedata() {
         
     	$logs = array(
@@ -34,7 +34,7 @@ class Api extends CT_Controller {
 
         $receivejson = array();
         //$receiveHeader = apache_request_headers();
-        // UnivCode´Â Çì´õ¿¡¼­ ¹Þ¾Æ¿À±â·Î ÇÔ 2020-02-26 °íº´¼öÂ÷Àå autoload->database.php¿¡¼­ Ã³¸®ÇÔ.
+        // UnivCodeï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¾Æ¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ 2020-02-26 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ autoload->database.phpï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½.
         
 		// json data Receive
         $receivejson = json_decode(file_get_contents('php://input'), true);  // json data name :order
@@ -43,7 +43,7 @@ class Api extends CT_Controller {
 		if (!$univcode) {      
             $message['rCode'] = "0001";
             $message['error']['errorCode'] = "0001";
-            $message['error']['errorMessage'] = "univcode°¡ Header¿¡ ¾ø½À´Ï´Ù.";
+            $message['error']['errorMessage'] = "univcodeï¿½ï¿½ Headerï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.";
             writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'],JSON_UNESCAPED_UNICODE)." eMessage=".json_encode($message['error']['errorMessage'],JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
             echo json_encode($message);
             exit;
@@ -51,19 +51,19 @@ class Api extends CT_Controller {
         writeLog("[{$sLogFileId}] univcode=" . json_encode($univcode,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
         
         //array dividing
-        // °¢ ¹è¿­ÀÇ Á¤ÀÇ¿Í ¼±¾ð
-        $order = array();    // 1´Ü°è±âº»¹è¿­:´Ü¼ö
+        // ï¿½ï¿½ ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½Ç¿ï¿½ ï¿½ï¿½ï¿½ï¿½
+        $order = array();    // 1ï¿½Ü°ï¿½âº»ï¿½è¿­:ï¿½Ü¼ï¿½
 		$order = $receivejson['order'];
 
-		$products = array(); // 2´Ü°è:º¹¼ö
-        $options = array();  // 3´Ü°è:º¹¼ö
-		$payments = array(); // 2´Ü°è:º¹¼ö
-		$benefits = array(); // 2´Ü°è:º¹¼ö
-		$cards = array();    // 3´Ü°è:´Ü¼ö
-        $coupons = array();  // 3´Ü°è:´Ü¼ö
+		$products = array(); // 2ï¿½Ü°ï¿½:ï¿½ï¿½ï¿½ï¿½
+        $options = array();  // 3ï¿½Ü°ï¿½:ï¿½ï¿½ï¿½ï¿½
+		$payments = array(); // 2ï¿½Ü°ï¿½:ï¿½ï¿½ï¿½ï¿½
+		$benefits = array(); // 2ï¿½Ü°ï¿½:ï¿½ï¿½ï¿½ï¿½
+		$cards = array();    // 3ï¿½Ü°ï¿½:ï¿½Ü¼ï¿½
+        $coupons = array();  // 3ï¿½Ü°ï¿½:ï¿½Ü¼ï¿½
 
 
-        // ¼ø¼­»ó orderProducts(º¹)/payments(º¹)/order(´Ü) ¹è¿­ ¸ÕÀú ºÐ¸®(´Ü¼öÀÓ)
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ orderProducts(ï¿½ï¿½)/payments(ï¿½ï¿½)/order(ï¿½ï¿½) ï¿½è¿­ ï¿½ï¿½ï¿½ï¿½ ï¿½Ð¸ï¿½(ï¿½Ü¼ï¿½ï¿½ï¿½)
 		$order['univcode'] = $univcode;
 		$products = $order['orderProducts'];
 		$payments = $order['payments'];
@@ -72,8 +72,8 @@ class Api extends CT_Controller {
         unset($order['payments']);
         unset($order['benefits']);
 
-		// ¹è¿­ÀÇ ºÐ¸®
-		// products¿Í optionsÀÇ ºÐ¸®
+		// ï¿½è¿­ï¿½ï¿½ ï¿½Ð¸ï¿½
+		// productsï¿½ï¿½ optionsï¿½ï¿½ ï¿½Ð¸ï¿½
 		if (is_array($products)) {
 		    for ($i = 0;$i < count($products);$i++) {
 				if(!empty($products[$i]['orderProductOptions'])) {
@@ -87,7 +87,7 @@ class Api extends CT_Controller {
 			$products = '';
 			$options = '';
 		}
-		// payments¿Í card,coupon ºÐ¸®
+		// paymentsï¿½ï¿½ card,coupon ï¿½Ð¸ï¿½
 		if (is_array($payments)) {
 		    for ($i = 0;$i < count($payments);$i++) {
 				if(!empty($payments[$i]['cardPaymentDetail'])) {
@@ -118,33 +118,33 @@ class Api extends CT_Controller {
 		//echo "benefits : <br>\n<br>\n";print_r($benefits);echo"<br>\n<br>\n";
         //exit;
 
-        // params ¸¸µé±â
-		// 1. 1Â÷¹è¿­ orderÀÇ param ¸¸µé±â
+        // params ï¿½ï¿½ï¿½ï¿½ï¿½
+		// 1. 1ï¿½ï¿½ï¿½è¿­ orderï¿½ï¿½ param ï¿½ï¿½ï¿½ï¿½ï¿½
 		$order_param = arrange_param($order,'order');
 
-		// 2.1 º¹¼ö¹è¿­À» º¸³»ÀÚ products/options,
+		// 2.1 ï¿½ï¿½ï¿½ï¿½ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ products/options,
 		if (is_array($products)) {
 		    for ($i = 0;$i < count($products);$i++) {
- 			    $products[$i]['univcode'] = $univcode;                 // univcode º¸³»ÁÖ±â
-				$products[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)´Â order¿¡¼­¸¸ º¸³»ÁÖ³×¿ä
-			    $products[$i]['posNo'] = $order['posNo'];              // posNo´Â products¿¡ ¾ø³×¿ä
+ 			    $products[$i]['univcode'] = $univcode;                 // univcode ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½
+				$products[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)ï¿½ï¿½ orderï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ö³×¿ï¿½
+			    $products[$i]['posNo'] = $order['posNo'];              // posNoï¿½ï¿½ productsï¿½ï¿½ ï¿½ï¿½ï¿½×¿ï¿½
 			    $Products_params[$i] = arrange_param($products[$i],'products');
 			}
 		} else {
             $Products_params[$i] = "";
 		}
         //echo " options : ".count($options)." ea<br>\n";
-		// 2.3 ´ÙÂ÷¿ø¹è¿­À» º¸³»ÀÚ options,
+		// 2.3 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ options,
 		if(is_array($options)) {
 			for ($i = 0;$i < count($options);$i++) {
 		        if(!empty($options[$i])) {
 			        for ($j = 0;$j < count($options[$i]);$j++) {
 						if(!empty($options[$i][$j])) {
-                            $options[$i][$j]['univcode'] = $univcode;                 // franchiseCd(=storecode)´Â order¿¡¼­¸¸ º¸³»ÁÖ³×¿ä
-  			                $options[$i][$j]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)´Â order¿¡¼­¸¸ º¸³»ÁÖ³×¿ä
-  		                    $options[$i][$j]['saleDay'] = $order['saleDay'];          // saleDay´Â options ¾ø³×¿ä
-		    	            $options[$i][$j]['posNo'] = $order['posNo'];              // posNo´Â options ¾ø³×¿ä
-   		                    $options[$i][$j]['billNo'] = $order['billNo'];            // billNo´Â options ¾ø³×¿ä
+                            $options[$i][$j]['univcode'] = $univcode;                 // franchiseCd(=storecode)ï¿½ï¿½ orderï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ö³×¿ï¿½
+  			                $options[$i][$j]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)ï¿½ï¿½ orderï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ö³×¿ï¿½
+  		                    $options[$i][$j]['saleDay'] = $order['saleDay'];          // saleDayï¿½ï¿½ options ï¿½ï¿½ï¿½×¿ï¿½
+		    	            $options[$i][$j]['posNo'] = $order['posNo'];              // posNoï¿½ï¿½ options ï¿½ï¿½ï¿½×¿ï¿½
+   		                    $options[$i][$j]['billNo'] = $order['billNo'];            // billNoï¿½ï¿½ options ï¿½ï¿½ï¿½×¿ï¿½
 			                $options_params[$i][$j] = arrange_param($options[$i][$j],'options');
                         }
 					}
@@ -156,19 +156,19 @@ class Api extends CT_Controller {
             $options_params = "";
 		}
 
-		// 2.2 º¹¼ö¹è¿­À» º¸³»ÀÚ payments
+		// 2.2 ï¿½ï¿½ï¿½ï¿½ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ payments
 		if (is_array($payments)) {
 		    for ($i = 0;$i < count($payments);$i++) {
    			    $payments[$i]['univcode'] = $univcode;
-				$payments[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)´Â order¿¡¼­¸¸ º¸³»ÁÖ³×¿ä
-			    $payments[$i]['posNo'] = $order['posNo'];              // posNo´Â payments¿¡ ¾ø³×¿ä
+				$payments[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)ï¿½ï¿½ orderï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ö³×¿ï¿½
+			    $payments[$i]['posNo'] = $order['posNo'];              // posNoï¿½ï¿½ paymentsï¿½ï¿½ ï¿½ï¿½ï¿½×¿ï¿½
 			    $payments_params[$i] = arrange_param($payments[$i],'payments');
 		    } 
 		} else {
             $payments_params[$i] = "";
 		}
 		
-		// 2.3 º¹¼ö¹è¿­À» º¸³»ÀÚ cards
+		// 2.3 ï¿½ï¿½ï¿½ï¿½ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ cards
 		for  ($i = 0;$i < count($cards);$i++) {
 		    if (is_array($cards[$i])) {
 				$cards[$i]['univcode'] = $univcode;
@@ -179,8 +179,8 @@ class Api extends CT_Controller {
 			}
         }				
 
-        // 2.4 º¹¼ö¹è¿­À» º¸³»ÀÚ coupons(°í°úÀåÀÌ Ä«µå´Â ´Ü¼ö·Î ¿Â´Ù°í ÇÔ ¸®¸¶Å© Ã³¸®)
-        // ¹è¿­ÀÌ ¾ø´Â °æ¿ì ¿¡·¯(http 500)°¡ ³ª¼­ ÀÏ´Ü ÀÌ´ë·Î µÒ: is_arrayÇÔ¼ö¸¦ »ç¿ëÇÏ¿© ¿¡·¯¸¦ ÀâÀ½
+        // 2.4 ï¿½ï¿½ï¿½ï¿½ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ coupons(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ï¿½ ï¿½Ü¼ï¿½ï¿½ï¿½ ï¿½Â´Ù°ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å© Ã³ï¿½ï¿½)
+        // ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(http 500)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ ï¿½Ì´ï¿½ï¿½ ï¿½ï¿½: is_arrayï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		for  ($i = 0;$i < count($coupons);$i++) {
 		    if (is_array($coupons[$i])) {
 				$coupons[$i]['univcode'] = $univcode;
@@ -191,15 +191,15 @@ class Api extends CT_Controller {
 			}
         }				
 
-		// 2.5 Ãß°¡) benefits array
+		// 2.5 ï¿½ß°ï¿½) benefits array
     	if (is_array($benefits)) {
 		    for ($i = 0;$i < count($benefits);$i++) {
 				$benefits[$i]['univcode'] = $univcode;
-  			    $benefits[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)´Â order¿¡¼­¸¸ º¸³»ÁÖ³×¿ä
-  		        $benefits[$i]['saleDay'] = $order['saleDay'];          // saleDay´Â options ¾ø³×¿ä
-		    	$benefits[$i]['posNo'] = $order['posNo'];              // posNo´Â options ¾ø³×¿ä
-   		        $benefits[$i]['billNo'] = $order['billNo'];            // billNo´Â options ¾ø³×¿ä
-                $benefits[$i]['paymentSeq'] = $payments[$i]['paymentSeq']; // paymentSeq´Â payments¿¡ ÀÖ¾î¿ä
+  			    $benefits[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)ï¿½ï¿½ orderï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ö³×¿ï¿½
+  		        $benefits[$i]['saleDay'] = $order['saleDay'];          // saleDayï¿½ï¿½ options ï¿½ï¿½ï¿½×¿ï¿½
+		    	$benefits[$i]['posNo'] = $order['posNo'];              // posNoï¿½ï¿½ options ï¿½ï¿½ï¿½×¿ï¿½
+   		        $benefits[$i]['billNo'] = $order['billNo'];            // billNoï¿½ï¿½ options ï¿½ï¿½ï¿½×¿ï¿½
+                $benefits[$i]['paymentSeq'] = $payments[$i]['paymentSeq']; // paymentSeqï¿½ï¿½ paymentsï¿½ï¿½ ï¿½Ö¾ï¿½ï¿½
 				$benefits_params[$i] = arrange_param($benefits[$i],'benefits');
 			} 
 		} else {
@@ -221,8 +221,8 @@ class Api extends CT_Controller {
         if (empty($cards_param)) $cards_param ='';
 		if (empty($coupons_param)) $coupons_param ='';
         if (empty($benefits_params)) $benefits_params ='';
-		//model·Î ´øÁ® DB¿¡ Æ®·£Àè¼Ç Ã³¸®¸¦ À§ÇØ ÇÑ¹æ¿¡ Ã³¸®(´Ü ³Î¹è¿­ Ã³¸®¹æ¹ý °í¹Î is_array·Î ÇØ°áÇÔ.)
-		// MS-SQL2019ÀÌÈÄ ÀÏºÎ µðºñ¿¡¼­ ÆÄ¶ó¸ÞÅ¸¸¦ ,,, ÀÌ·¸°Ô ¸ø³Ö¾î¼­ Àç±¸¼ºÇÔ.
+		//modelï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ DBï¿½ï¿½ Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ¹æ¿¡ Ã³ï¿½ï¿½(ï¿½ï¿½ ï¿½Î¹è¿­ Ã³ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ is_arrayï¿½ï¿½ ï¿½Ø°ï¿½ï¿½ï¿½.)
+		// MS-SQL2019ï¿½ï¿½ï¿½ï¿½ ï¿½Ïºï¿½ ï¿½ï¿½ñ¿¡¼ï¿½ ï¿½Ä¶ï¿½ï¿½Å¸ï¿½ï¿½ ,,, ï¿½Ì·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ö¾î¼­ ï¿½ç±¸ï¿½ï¿½ï¿½ï¿½.
 		//foreach($order as $key => $value){if(isset($value)) $order[$key] = '';}
 		//$insertDB = $this->API->insertDB($order_param, $Products_params, $options_params, $payments_params, $cards_param, $coupons_param, $benefits_params);
 		$insertDB = $this->API->insertDB($order_param, $Products_params, $options_params, $payments_params, $cards_param, $coupons_param, $benefits_params);
@@ -230,13 +230,13 @@ class Api extends CT_Controller {
         if ($insertDB !== RES_CODE_SUCCESS) {
             $message['rCode'] = "0002";
             $message['error']['errorCode'] = "0002";
-            $message['error']['errorMessage'] = "InsertDB Ã³¸®½ÇÆÐ!!";
+            $message['error']['errorMessage'] = "InsertDB Ã³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½!!";
             writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'])." eMessage=".json_encode($message['error']['errorMessage']), $sLogPath, $bLogable);
             echo json_encode($message);
             exit;
         }
         
-		// ÀÌÇÏ´Â ¸ðµÎ ·Î±×¸¦ ¾²´Â ·çÆ¾ÀÎµ¥¿ä ³ªÁß¿¡ Á¤¸®ÇØ¾ß ÇÕ´Ï´Ù. ¹«½ÄÇÏ°Ô ·Î±×ÇÑÁÙ¸¶´Ù for¸¦ µ¹¸®°í ÀÖ½À´Ï´Ù. ¾Ö°í ³ªÁß¿¡ ¸ð¾Æ¼­ ÇÒ ¿¹Á¤!!
+		// ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ ï¿½Î±×¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¾ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ß¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ø¾ï¿½ ï¿½Õ´Ï´ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½Î±ï¿½ï¿½ï¿½ï¿½Ù¸ï¿½ï¿½ï¿½ forï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö½ï¿½ï¿½Ï´ï¿½. ï¿½Ö°ï¿½ ï¿½ï¿½ï¿½ß¿ï¿½ ï¿½ï¿½Æ¼ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½!!
 		// order
 		writeLog("[{$sLogFileId}] order=" . json_encode(implode( '|', $order_param ),JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
 		// Products
@@ -253,7 +253,7 @@ class Api extends CT_Controller {
 			    }
 		    }
 		} else {
-            writeLog("[{$sLogFileId}] Options= µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù.", $sLogPath, $bLogable);
+            writeLog("[{$sLogFileId}] Options= ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.", $sLogPath, $bLogable);
 		}
 		// payments
 		for ($i = 0;$i < count($payments_params);$i++) {
@@ -266,7 +266,7 @@ class Api extends CT_Controller {
                 writeLog("[{$sLogFileId}] cards=" . json_encode(implode( '|', $cards_param[$i] ),JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
 			}
 		} else {
-            writeLog("[{$sLogFileId}] cards= µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù.", $sLogPath, $bLogable);
+            writeLog("[{$sLogFileId}] cards= ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.", $sLogPath, $bLogable);
 		}
 		// coupons
 		if(!empty($coupons_param)) {
@@ -275,7 +275,7 @@ class Api extends CT_Controller {
 			    writeLog("[{$sLogFileId}] coupons=" . json_encode(implode( '|', $coupons_param[$i] ),JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
 			}
 		} else {
-            writeLog("[{$sLogFileId}] coupons= µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù.", $sLogPath, $bLogable);
+            writeLog("[{$sLogFileId}] coupons= ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.", $sLogPath, $bLogable);
 		}
 		// benefits
 		if (!empty($benefits_params)) {
@@ -283,7 +283,7 @@ class Api extends CT_Controller {
 			    writeLog("[{$sLogFileId}] benefits[".$i."] = " . json_encode(implode( '|', $benefits_params[$i] ),JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
 		    }
 		} else {
-            writeLog("[{$sLogFileId}] benefits= µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù.", $sLogPath, $bLogable);
+            writeLog("[{$sLogFileId}] benefits= ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.", $sLogPath, $bLogable);
 		}
 
         // Ends of Log Write
@@ -294,7 +294,7 @@ class Api extends CT_Controller {
         return;
     }
 	
-	//ÁÖ¹®Á¤º¸ receive api
+	//ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ receive api
     public function ci_ver() {
         echo CI_VERSION;
 	}

@@ -6,75 +6,132 @@ class dauApi extends CT_Controller {
 
     public function __construct(){
 		parent::__construct();
-		$this->load->model('daumodel','API');
+        $this->load->helper('common_helper');
+        $this->load->library('form_validation');;
+		//$this->load->model('daumodel','API');
     }	
     
     public function index(){
         echo("Now init!!");
     }
 
-    //�ֹ����� receive api
-    public function receivedata() {
+    //주문정보 receive api
+    public function receive()
+    {
         
-    	$logs = array(
+    	$logs = [
             'sLogFileId'    => time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5),
-            'sLogPath'      => BASEPATH . '../../logs/receivedata/' . date('Ymd') . '_data.log',
+            'sLogPath'      => BASEPATH . '../../logs/dauapi/' . date('Ymd') . '_receive.log',
             'bLogable'      => true
-        );
+        ];
 
         $sLogFileId  = time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5);
-        $sLogPath    = BASEPATH . '../../logs/receivedata/' . date('Ymd') . '_data.log';
+        $sLogPath    = BASEPATH . '../../logs/dauapi/' . date('Ymd') . '_receive.log';
         $bLogable    = true;
 
-        $message = array(
-            'rCode' => RES_CODE_SUCCESS,
-            'error' => array (  'errorCode'     => null,
-                                'errorMessage'  => null, ),
-        );
-        writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
+        $results = [
+            'success'    => RES_CODE_SUCCESS,
+            'msg'        => '',
+            'data'       => null
+        ];
 
-        $receivejson = array();
-        //$receiveHeader = apache_request_headers();
-        // UnivCode�� ������� �޾ƿ���� �� 2020-02-26 ���������� autoload->database.php���� ó����.
+        try
+        {
+            $this->form_validation->set_rules('UnivCode', '', 'trim|required|xss_clean');
+            
+            writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
+            //$univcode = $_POST['UnivCode'];
+            $univcode = $this->input->post('UnivCode', TRUE);
+            writeLog("[{$sLogFileId}] post_UnivCode= " .json_encode($univcode,JSON_UNESCAPED_UNICODE), $sLogPath);
+            // Post Data 검증
+            if(empty($univcode)){
+                $results['success'] = ERR_CODE_POST;
+                $results['msg']     = "(".$univcode.") UniovCode가 POST전달되지 않았습니다!";
+                throw new Exception("UniovCode가 POST전달되지 않았습니다!");
+            }
+
+            //$today = date("Ymd");
+            $yesterday = date('Ymd', $_SERVER['REQUEST_TIME']-86400);
+
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL            => TEST_URL.$yesterday,
+                CURLOPT_RETURNTRANSFER => TRUE,
+                CURLOPT_ENCODING       => '',
+                CURLOPT_MAXREDIRS      => 10,
+                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_FOLLOWLOCATION => TRUE,
+                CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST  => 'GET',
+                CURLOPT_HTTPHEADER     => ['Authorization: Basic '.TEST_AUTH],
+            ]);
+            $receivejson = curl_exec($curl);
+            curl_close($curl);
+            
+            //echo $receivejson;
+            //exit;
+            //$receiveHeader = apache_request_headers();
+            // UnivCode는 헤더에서 받아오기로 함 2020-02-26 고병수차장 autoload->database.php에서 처리함.
         
-		// json data Receive
-        $receivejson = json_decode(file_get_contents('php://input'), true);  // json data name :order
-        $univcode = $_POST['UnivCode'];
-		
-		if (!$univcode) {      
-            $message['rCode'] = "0001";
-            $message['error']['errorCode'] = "0001";
-            $message['error']['errorMessage'] = "univcode�� Header�� �����ϴ�.";
-            writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'],JSON_UNESCAPED_UNICODE)." eMessage=".json_encode($message['error']['errorMessage'],JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
-            echo json_encode($message);
+		    // json data Receive
+            $receivetemp = json_decode($receivejson, TRUE);
+            $receivearr  = json_decode($receivetemp, TRUE);
+            //$receivearr = stripslashes($receivearr);
+            //print_r($receivearr);
+            //exit;
+
+            // json Data 검증
+            //echo("isValid:".$receivearr['isValid']);
+            //exit;
+            if($receivearr['isValid'] != TRUE || !empty($receivearr['errorMsg'])){
+                $results['success'] = ERR_CODE_JSON;
+                $results['msg']     = "(".$receivearr['errorMsg'].") 수신 JSON 오류!";
+                throw new Exception($receivearr['errorMsg']." 수신 JSON 오류!");
+            }
+        
+            // 각 배열의 정의와 선언
+            $receipts = [];         // 1단계기본배열:복수개
+		    $receipts = $receivearr['receipts'];
+            //print_r($receipts);
+            //exit;
+            $billNo = $receipts['0']['billNo'];
+            //echo("0 billNo: ".$billNo);
+            //exit;
+
+            $receiptProduct  = [];   // 2단계:판매상품:복수
+            foreach($receipts as $key => $value){
+                $saleDate        = $value['saleDate'];
+                $billNo          = $value['billNo'];
+                $receiptProduct  = $value['receiptProduct'];
+                echo("billNo: ".$billNo);
+                print_r($receiptProduct);
+            }
+
             exit;
-        }
-        writeLog("[{$sLogFileId}] univcode=" . json_encode($univcode,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
-        
-        //array dividing
-        // �� �迭�� ���ǿ� ����
-        $order = array();    // 1�ܰ�⺻�迭:�ܼ�
-		$order = $receivejson['order'];
 
-		$products = array(); // 2�ܰ�:����
-        $options = array();  // 3�ܰ�:����
-		$payments = array(); // 2�ܰ�:����
-		$benefits = array(); // 2�ܰ�:����
-		$cards = array();    // 3�ܰ�:�ܼ�
-        $coupons = array();  // 3�ܰ�:�ܼ�
+            //$receiptProduct  = [];   // 2단계:판매상품:복수
+            $receiptDiscount = [];   // 2단계:할인내역:복수
+            $receiptPayment  = [];   // 2단계:결제내역:복수
+            $receiptCard     = [];   // 2단계:카드내역:복수
+            $receiptCash     = [];   // 2단계:현금내역:복수
+
+            // 순서상 orderProducts(복)/payments(복)/order(단) 배열 먼저 분리(단수임)
+		    $receiptProduct  = $receipts['0']['receiptProduct'];
+		    $receiptDiscount = $receipts['receiptDiscount'];
+		    $receiptPayment  = $receipts['receiptPayment'];
+		    $receiptCard     = $receipts['receiptCard'];
+		    $receiptCash     = $receipts['receiptCash'];
+
+            print_r($receiptProduct);
+            exit;
 
 
-        // ������ orderProducts(��)/payments(��)/order(��) �迭 ���� �и�(�ܼ���)
-		$order['univcode'] = $univcode;
-		$products = $order['orderProducts'];
-		$payments = $order['payments'];
-		$benefits = $order['benefits'];
-        unset($order['orderProducts']);
-        unset($order['payments']);
-        unset($order['benefits']);
+            unset($order['orderProducts']);
+            unset($order['payments']);
+            unset($order['benefits']);
 
-		// �迭�� �и�
-		// products�� options�� �и�
+		// 배열의 분리
+		// products와 options의 분리
 		if (is_array($products)) {
 		    for ($i = 0;$i < count($products);$i++) {
 				if(!empty($products[$i]['orderProductOptions'])) {
@@ -88,7 +145,7 @@ class dauApi extends CT_Controller {
 			$products = '';
 			$options = '';
 		}
-		// payments�� card,coupon �и�
+		// payments와 card,coupon 분리
 		if (is_array($payments)) {
 		    for ($i = 0;$i < count($payments);$i++) {
 				if(!empty($payments[$i]['cardPaymentDetail'])) {
@@ -119,33 +176,33 @@ class dauApi extends CT_Controller {
 		//echo "benefits : <br>\n<br>\n";print_r($benefits);echo"<br>\n<br>\n";
         //exit;
 
-        // params �����
-		// 1. 1���迭 order�� param �����
+        // params 만들기
+		// 1. 1차배열 order의 param 만들기
 		$order_param = arrange_param($order,'order');
 
-		// 2.1 �����迭�� ������ products/options,
+		// 2.1 복수배열을 보내자 products/options,
 		if (is_array($products)) {
 		    for ($i = 0;$i < count($products);$i++) {
- 			    $products[$i]['univcode'] = $univcode;                 // univcode �����ֱ�
-				$products[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)�� order������ �����ֳ׿�
-			    $products[$i]['posNo'] = $order['posNo'];              // posNo�� products�� ���׿�
+ 			    $products[$i]['univcode'] = $univcode;                 // univcode 보내주기
+				$products[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)는 order에서만 보내주네요
+			    $products[$i]['posNo'] = $order['posNo'];              // posNo는 products에 없네요
 			    $Products_params[$i] = arrange_param($products[$i],'products');
 			}
 		} else {
             $Products_params[$i] = "";
 		}
         //echo " options : ".count($options)." ea<br>\n";
-		// 2.3 �������迭�� ������ options,
+		// 2.3 다차원배열을 보내자 options,
 		if(is_array($options)) {
 			for ($i = 0;$i < count($options);$i++) {
 		        if(!empty($options[$i])) {
 			        for ($j = 0;$j < count($options[$i]);$j++) {
 						if(!empty($options[$i][$j])) {
-                            $options[$i][$j]['univcode'] = $univcode;                 // franchiseCd(=storecode)�� order������ �����ֳ׿�
-  			                $options[$i][$j]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)�� order������ �����ֳ׿�
-  		                    $options[$i][$j]['saleDay'] = $order['saleDay'];          // saleDay�� options ���׿�
-		    	            $options[$i][$j]['posNo'] = $order['posNo'];              // posNo�� options ���׿�
-   		                    $options[$i][$j]['billNo'] = $order['billNo'];            // billNo�� options ���׿�
+                            $options[$i][$j]['univcode'] = $univcode;                 // franchiseCd(=storecode)는 order에서만 보내주네요
+  			                $options[$i][$j]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)는 order에서만 보내주네요
+  		                    $options[$i][$j]['saleDay'] = $order['saleDay'];          // saleDay는 options 없네요
+		    	            $options[$i][$j]['posNo'] = $order['posNo'];              // posNo는 options 없네요
+   		                    $options[$i][$j]['billNo'] = $order['billNo'];            // billNo는 options 없네요
 			                $options_params[$i][$j] = arrange_param($options[$i][$j],'options');
                         }
 					}
@@ -157,19 +214,19 @@ class dauApi extends CT_Controller {
             $options_params = "";
 		}
 
-		// 2.2 �����迭�� ������ payments
+		// 2.2 복수배열을 보내자 payments
 		if (is_array($payments)) {
 		    for ($i = 0;$i < count($payments);$i++) {
    			    $payments[$i]['univcode'] = $univcode;
-				$payments[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)�� order������ �����ֳ׿�
-			    $payments[$i]['posNo'] = $order['posNo'];              // posNo�� payments�� ���׿�
+				$payments[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)는 order에서만 보내주네요
+			    $payments[$i]['posNo'] = $order['posNo'];              // posNo는 payments에 없네요
 			    $payments_params[$i] = arrange_param($payments[$i],'payments');
 		    } 
 		} else {
             $payments_params[$i] = "";
 		}
 		
-		// 2.3 �����迭�� ������ cards
+		// 2.3 복수배열을 보내자 cards
 		for  ($i = 0;$i < count($cards);$i++) {
 		    if (is_array($cards[$i])) {
 				$cards[$i]['univcode'] = $univcode;
@@ -180,8 +237,8 @@ class dauApi extends CT_Controller {
 			}
         }				
 
-        // 2.4 �����迭�� ������ coupons(�������� ī��� �ܼ��� �´ٰ� �� ����ũ ó��)
-        // �迭�� ���� ��� ����(http 500)�� ���� �ϴ� �̴�� ��: is_array�Լ��� ����Ͽ� ������ ����
+        // 2.4 복수배열을 보내자 coupons(고과장이 카드는 단수로 온다고 함 리마크 처리)
+        // 배열이 없는 경우 에러(http 500)가 나서 일단 이대로 둠: is_array함수를 사용하여 에러를 잡음
 		for  ($i = 0;$i < count($coupons);$i++) {
 		    if (is_array($coupons[$i])) {
 				$coupons[$i]['univcode'] = $univcode;
@@ -192,15 +249,15 @@ class dauApi extends CT_Controller {
 			}
         }				
 
-		// 2.5 �߰�) benefits array
+		// 2.5 추가) benefits array
     	if (is_array($benefits)) {
 		    for ($i = 0;$i < count($benefits);$i++) {
 				$benefits[$i]['univcode'] = $univcode;
-  			    $benefits[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)�� order������ �����ֳ׿�
-  		        $benefits[$i]['saleDay'] = $order['saleDay'];          // saleDay�� options ���׿�
-		    	$benefits[$i]['posNo'] = $order['posNo'];              // posNo�� options ���׿�
-   		        $benefits[$i]['billNo'] = $order['billNo'];            // billNo�� options ���׿�
-                $benefits[$i]['paymentSeq'] = $payments[$i]['paymentSeq']; // paymentSeq�� payments�� �־��
+  			    $benefits[$i]['franchiseCd'] = $order['franchiseCd'];  // franchiseCd(=storecode)는 order에서만 보내주네요
+  		        $benefits[$i]['saleDay'] = $order['saleDay'];          // saleDay는 options 없네요
+		    	$benefits[$i]['posNo'] = $order['posNo'];              // posNo는 options 없네요
+   		        $benefits[$i]['billNo'] = $order['billNo'];            // billNo는 options 없네요
+                $benefits[$i]['paymentSeq'] = $payments[$i]['paymentSeq']; // paymentSeq는 payments에 있어요
 				$benefits_params[$i] = arrange_param($benefits[$i],'benefits');
 			} 
 		} else {
@@ -222,8 +279,8 @@ class dauApi extends CT_Controller {
         if (empty($cards_param)) $cards_param ='';
 		if (empty($coupons_param)) $coupons_param ='';
         if (empty($benefits_params)) $benefits_params ='';
-		//model�� ���� DB�� Ʈ����� ó���� ���� �ѹ濡 ó��(�� �ι迭 ó����� ���� is_array�� �ذ���.)
-		// MS-SQL2019���� �Ϻ� ��񿡼� �Ķ��Ÿ�� ,,, �̷��� ���־ �籸����.
+		//model로 던져 DB에 트랜잭션 처리를 위해 한방에 처리(단 널배열 처리방법 고민 is_array로 해결함.)
+		// MS-SQL2019이후 일부 디비에서 파라메타를 ,,, 이렇게 못넣어서 재구성함.
 		//foreach($order as $key => $value){if(isset($value)) $order[$key] = '';}
 		//$insertDB = $this->API->insertDB($order_param, $Products_params, $options_params, $payments_params, $cards_param, $coupons_param, $benefits_params);
 		$insertDB = $this->API->insertDB($order_param, $Products_params, $options_params, $payments_params, $cards_param, $coupons_param, $benefits_params);
@@ -231,13 +288,13 @@ class dauApi extends CT_Controller {
         if ($insertDB !== RES_CODE_SUCCESS) {
             $message['rCode'] = "0002";
             $message['error']['errorCode'] = "0002";
-            $message['error']['errorMessage'] = "InsertDB ó������!!";
+            $message['error']['errorMessage'] = "InsertDB 처리실패!!";
             writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'])." eMessage=".json_encode($message['error']['errorMessage']), $sLogPath, $bLogable);
             echo json_encode($message);
             exit;
         }
         
-		// ���ϴ� ��� �α׸� ���� ��ƾ�ε��� ���߿� �����ؾ� �մϴ�. �����ϰ� �α����ٸ��� for�� ������ �ֽ��ϴ�. �ְ� ���߿� ��Ƽ� �� ����!!
+		// 이하는 모두 로그를 쓰는 루틴인데요 나중에 정리해야 합니다. 무식하게 로그한줄마다 for를 돌리고 있습니다. 애고 나중에 모아서 할 예정!!
 		// order
 		writeLog("[{$sLogFileId}] order=" . json_encode(implode( '|', $order_param ),JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
 		// Products
@@ -254,7 +311,7 @@ class dauApi extends CT_Controller {
 			    }
 		    }
 		} else {
-            writeLog("[{$sLogFileId}] Options= �����Ͱ� �����ϴ�.", $sLogPath, $bLogable);
+            writeLog("[{$sLogFileId}] Options= 데이터가 없습니다.", $sLogPath, $bLogable);
 		}
 		// payments
 		for ($i = 0;$i < count($payments_params);$i++) {
@@ -267,7 +324,7 @@ class dauApi extends CT_Controller {
                 writeLog("[{$sLogFileId}] cards=" . json_encode(implode( '|', $cards_param[$i] ),JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
 			}
 		} else {
-            writeLog("[{$sLogFileId}] cards= �����Ͱ� �����ϴ�.", $sLogPath, $bLogable);
+            writeLog("[{$sLogFileId}] cards= 데이터가 없습니다.", $sLogPath, $bLogable);
 		}
 		// coupons
 		if(!empty($coupons_param)) {
@@ -276,7 +333,7 @@ class dauApi extends CT_Controller {
 			    writeLog("[{$sLogFileId}] coupons=" . json_encode(implode( '|', $coupons_param[$i] ),JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
 			}
 		} else {
-            writeLog("[{$sLogFileId}] coupons= �����Ͱ� �����ϴ�.", $sLogPath, $bLogable);
+            writeLog("[{$sLogFileId}] coupons= 데이터가 없습니다.", $sLogPath, $bLogable);
 		}
 		// benefits
 		if (!empty($benefits_params)) {
@@ -284,7 +341,7 @@ class dauApi extends CT_Controller {
 			    writeLog("[{$sLogFileId}] benefits[".$i."] = " . json_encode(implode( '|', $benefits_params[$i] ),JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
 		    }
 		} else {
-            writeLog("[{$sLogFileId}] benefits= �����Ͱ� �����ϴ�.", $sLogPath, $bLogable);
+            writeLog("[{$sLogFileId}] benefits= 데이터가 없습니다.", $sLogPath, $bLogable);
 		}
 
         // Ends of Log Write
@@ -294,8 +351,14 @@ class dauApi extends CT_Controller {
 		echo json_encode($message);
         return;
     }
-	
-	//�ֹ����� receive api
+    catch (File_exception $e) {
+        $results['success'] = $e->error;
+        $results['msg']     = $e->message;
+    }
+}
+
+
+    //주문정보 테스트
     public function ci_ver() {
         echo CI_VERSION;
 	}
