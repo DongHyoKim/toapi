@@ -1,0 +1,21 @@
+CREATE TABLE `tb_gftprecard` (
+   `id`                INT(11)      NOT NULL          AUTO_INCREMENT COMMENT 'PK',
+   `univcode`          CHAR(05)     NOT NULL          COMMENT '대학코드',
+   `sub_univcode`      CHAR(03)     NOT NULL          COMMENT '캠퍼스코드',
+   `card_no`           VARCHAR(16)  NOT NULL          COMMENT '카드번호',
+   `card_title`        VARCHAR(50)  NOT NULL          COMMENT '카드제목'     COLLATE 'utf8_general_ci',
+   `expire_term_start` DATETIME     NOT NULL          COMMENT '유효기간_시작',
+   `expire_term_end`   DATETIME     NOT NULL          COMMENT '유효기간_끝',
+   `issue_date`        CHAR(08)     NOT NULL          COMMENT '발급일자',
+   `issuer_name`       VARCHAR(30)  NULL DEFAULT ''   COMMENT '발급기관명칭'  COLLATE 'utf8_general_ci',
+   `card_amount`       FLOAT        NOT NULL          COMMENT '카드금액'      COLLATE 'utf8_general_ci',
+   `card_message`      VARCHAR(100) NULL DEFAULT ''   COMMENT '카드메시지'   COLLATE 'utf8_general_ci',
+   `time_create`       DATETIME     NOT NULL          COMMENT '생성일시',
+   `time_modify`       DATETIME     NULL DEFAULT NULL COMMENT '수정일시',
+   PRIMARY KEY (`id`) USING BTREE
+)
+COMMENT='카드기본정보'
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=1
+;

@@ -1,0 +1,23 @@
+CREATE TABLE `tb_kakao_alimtalk_log` (
+   `id` INT(11) NOT NULL AUTO_INCREMENT COMMENT 'PK',
+   `send_from` ENUM('api','admin','batch') NULL DEFAULT NULL COMMENT '보낸경로(챗봇API,관리자,배치)' COLLATE 'utf8_general_ci',
+   `user_key` VARCHAR(50) NULL DEFAULT NULL COMMENT 'user_key' COLLATE 'utf8_general_ci',
+   `sender_key` VARCHAR(100) NOT NULL COMMENT 'sender_key' COLLATE 'utf8_general_ci',
+   `cust_gubun` VARCHAR(50) NOT NULL COMMENT 'cust_gubun(makebot고정값)' COLLATE 'utf8_general_ci',
+   `phone` VARCHAR(20) NOT NULL COMMENT '수신자 번호' COLLATE 'utf8_general_ci',
+   `template_code` VARCHAR(30) NOT NULL COMMENT '템플릿코드' COLLATE 'utf8_general_ci',
+   `msg` TEXT NULL DEFAULT NULL COMMENT '내용' COLLATE 'utf8_general_ci',
+   `is_auth` TINYINT(1) NULL DEFAULT NULL COMMENT '인증번호 발송용 여부',
+   `auth_num` VARCHAR(5) NULL DEFAULT NULL COMMENT '인증번호' COLLATE 'utf8_general_ci',
+   `auth_pass` TINYINT(1) NULL DEFAULT NULL COMMENT '인증 통과여부',
+   `res_code` VARCHAR(5) NULL DEFAULT NULL COMMENT '응답 코드(200성공 400실패)' COLLATE 'utf8_general_ci',
+   `res_sn` VARCHAR(50) NULL DEFAULT NULL COMMENT '응답 sn' COLLATE 'utf8_general_ci',
+   `time_create` DATETIME NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성일시',
+   `time_modify` DATETIME NULL DEFAULT NULL COMMENT '수정일시',
+   PRIMARY KEY (`id`) USING BTREE
+)
+COMMENT='알림톡 발송 로그'
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=1
+;
