@@ -6,9 +6,9 @@ class dauApi extends CT_Controller {
 
     public function __construct(){
 		parent::__construct();
-        $this->load->helper('common_helper');
         $this->load->library('form_validation');;
-		//$this->load->model('daumodel','API');
+		$this->load->helper('common_helper');
+		$this->load->model('daumodel','DAU');
     }	
     
     public function index(){
@@ -89,23 +89,52 @@ class dauApi extends CT_Controller {
                 throw new Exception($receivearr['errorMsg']." 수신 JSON 오류!");
             }
         
+            // Config정보 가져오기
+			// 학교 매장코드 가져오기
+			
             // 각 배열의 정의와 선언
             $receipts = [];         // 1단계기본배열:복수개
 		    $receipts = $receivearr['receipts'];
             //print_r($receipts);
             //exit;
-            $billNo = $receipts['0']['billNo'];
-            //echo("0 billNo: ".$billNo);
-            //exit;
+
 
             $receiptProduct  = [];   // 2단계:판매상품:복수
+			$baseParams = [];
             foreach($receipts as $key => $value){
-                $saleDate        = $value['saleDate'];
-                $billNo          = $value['billNo'];
+                $baseParams = [
+					'UNIVCODE'            => $univcode,
+					'SUBUNIVCODE'         => '001',
+					'SALEDATE'            => $value['saleDate'],
+					'STORECODE'           => $value['storeCode'],
+					'POSID'               => $value['posCode'],
+					'BILLNUMBER'          => $value['billNo'],
+					'CREATEDATE'          => date("YYYYMMDDHHmmss",time()),
+					'ORDER_PLATFORMID'    => OFFER,
+					'ORDER_PLATFORMTYPE'  => PLATFORMTYPE,
+					'ORDER_AMOUNT'        => $value['saleAmount'],
+					'ORDER_TOTALAMOUNT'   => $value['totalAmount'],
+					'ORDER_DCAMOUNT'      => $value['dcAmount'],
+					'ORDER_INAMOUNT'      => $value['totalAmount'],
+					'ORDER_CHANGEMONEY'   => 0,
+					'ORDER_DFREEAMOUNT'   => $value['saleTaxfreeAmount'],
+					'ORDER_TAXAMOUNT'     => $value['saleTaxAmount'],
+					'ORDER_SUPPLYAMOUNT'  => $value['supplyAmount'],
+					'ORDER_VATAMOUNT'     => $value['taxAmount'],
+					'ORDER_ORGSALEDATE'   => $value['orgSaleDate'],
+					'ORDER_ORGPOSID'      => $value['orgPosCode'],
+					'ORDER_ORGBILLNUMBER' => $value['orgBillNo'],
+					'INSERTDATE'          => date("YYYYMMDDHHmmss",time()),
+					'INSERTID'            => INSERTID,
+				];
+
                 $receiptProduct  = $value['receiptProduct'];
-                echo("billNo: ".$billNo);
-                print_r($receiptProduct);
             }
+
+
+			$codeType  = '01';       // 코드구분:학교매장코드
+			$offerStorecode  = $receipts['0']['storeCode'];
+			$storecode = $this->DAU->getStorecode($codeType,$offerStorecode);    // 키오스크 설치 매장코드 배열			
 
             exit;
 

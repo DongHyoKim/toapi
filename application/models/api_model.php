@@ -34,6 +34,6 @@ class Api_model extends CI_Model {
         
 		return  $this->db->affected_rows();    
     }
-
+}
 /* End of file api_model.php */
 /* Location: ./application/models/api_model.php */

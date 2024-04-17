@@ -59,6 +59,10 @@ define('KEY_256', substr(AES_KEY, 0, 256 / 8));
 define('TEST_URL', 'https://testapi.kiwoompaypos.co.kr/api/SaleReceipt/sales?searchDate=');
 define('TEST_AUTH', 'Y2VnbTlXdDNlZUlnL3h4M0xsaXFvQT09OmhScXNGeEVSSWJiUmdjQmh4RFZJL1E9PQ==');
 define('CAMPUS', '001');
+define('OFFER', 'DAU');
+define('DBNAME', 'VENDINGM');
+define('PLATFORMTYPE', 'KIOSK');
+define('INSERTID', 'BATCH');
 
 /* End of file constants.php */
 /* Location: ./application/config/constants.php */
