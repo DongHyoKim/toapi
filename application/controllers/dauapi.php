@@ -46,8 +46,8 @@ class dauApi extends CT_Controller {
             // Post Data 검증
             if(empty($univcode)){
                 $results['success'] = ERR_CODE_POST;
-                $results['msg']     = "(".$univcode.") UniovCode가 POST전달되지 않았습니다!";
-                throw new Exception("UniovCode가 POST전달되지 않았습니다!");
+                $results['msg']     = "(".$univcode.") UnivCode가 POST전달되지 않았습니다!";
+                throw new Exception("UnivCode가 POST전달되지 않았습니다!");
             }
 
             //$today = date("Ymd");
@@ -65,70 +65,193 @@ class dauApi extends CT_Controller {
                 CURLOPT_CUSTOMREQUEST  => 'GET',
                 CURLOPT_HTTPHEADER     => ['Authorization: Basic '.TEST_AUTH],
             ]);
-            $receivejson = curl_exec($curl);
+            $receive_json = curl_exec($curl);
             curl_close($curl);
             
-            //echo $receivejson;
+            //echo $receive_json;
             //exit;
             //$receiveHeader = apache_request_headers();
             // UnivCode는 헤더에서 받아오기로 함 2020-02-26 고병수차장 autoload->database.php에서 처리함.
         
 		    // json data Receive
-            $receivetemp = json_decode($receivejson, TRUE);
-            $receivearr  = json_decode($receivetemp, TRUE);
-            //$receivearr = stripslashes($receivearr);
-            //print_r($receivearr);
+			$receive_arr  = [];
+            $receive_temp = json_decode($receive_json, TRUE);
+            $receive_arr  = json_decode($receive_temp, TRUE);
+            //$receive_arr = stripslashes($receive_arr);
+            //print_r($receive_arr);
             //exit;
 
             // json Data 검증
             //echo("isValid:".$receivearr['isValid']);
             //exit;
-            if($receivearr['isValid'] != TRUE || !empty($receivearr['errorMsg'])){
+            if($receivearr['isValid'] != TRUE || !empty($receive_arr['errorMsg'])){
                 $results['success'] = ERR_CODE_JSON;
-                $results['msg']     = "(".$receivearr['errorMsg'].") 수신 JSON 오류!";
-                throw new Exception($receivearr['errorMsg']." 수신 JSON 오류!");
+                $results['msg']     = "(".$receive_arr['errorMsg'].") 수신 JSON 오류!";
+                throw new Exception($receive_arr['errorMsg']." 수신 JSON 오류!");
             }
         
             // Config정보 가져오기
-			// 학교 매장코드 가져오기
 			
             // 각 배열의 정의와 선언
             $receipts = [];         // 1단계기본배열:복수개
-		    $receipts = $receivearr['receipts'];
+		    $receipts = $receive_arr['receipts'];
             //print_r($receipts);
             //exit;
 
+			// 학교 매장코드 가져오기
+			$code_type            = '01';       // 코드구분:학교매장코드
+			$receive_storecode    = $receipts['0']['storeCode'];
+			$univstore_code       = $this->DAU->getStorecode($code_type,$receive_storecode);
+			$standard_codes       = $this->DAU->getStandardcode();
+			$univcode             = substr($univstore_code,0,5);
+			$conversion_storecode = substr($univstore_code,-7,7);
+			$processdate          = date("YYYYMMDDHHmmss",time());			
 
-            $receiptProduct  = [];   // 2단계:판매상품:복수
+			$paymenttype_arr   = [];
+			$saletype_arr      = [];
+			$discounttype_arr  = [];
+			$cardapproval_arr  = [];
+			$cardpurchaser_arr = [];
+			foreach($standard_codes as $key => $value){
+				if($value['CODETYPE'] == '11'){          // 결제구분(현금/페이코/신용카드/알리페이/)
+                    $paymenttype_arr[$value['OFFERCODE']] = $value['CWAYCODE'].'|'.$value['CODENAME'];
+				} else if($value['CODETYPE'] == '12') {  // 판매구분(정상/반품)
+                    $saletype_arr[$value['OFFERCODE']] = $value['CWAYCODE'];
+				} else if($value['CODETYPE'] == '13') {  // 할인구분(금액할인)
+					$discounttype_arr[$value['OFFERCODE']] = $value['CWAYCODE'];
+				} else if($value['CODETYPE'] == '21') {  // 카드등록구분(임의/POS/CAT/VCAT/)
+					$cardapproval_arr[$value['OFFERCODE']] = $value['CWAYCODE'];
+				} else if($value['CODETYPE'] == '22') {  // 매입사코드
+					$cardpurchaser_arr[$value['OFFERCODE']] = $value['CWAYCODE'];
+				}
+			}
+
+
 			$baseParams = [];
-            foreach($receipts as $key => $value){
+            foreach($receipts as $basekey => $basevalue){
                 $baseParams = [
 					'UNIVCODE'            => $univcode,
-					'SUBUNIVCODE'         => '001',
-					'SALEDATE'            => $value['saleDate'],
-					'STORECODE'           => $value['storeCode'],
-					'POSID'               => $value['posCode'],
-					'BILLNUMBER'          => $value['billNo'],
-					'CREATEDATE'          => date("YYYYMMDDHHmmss",time()),
+					'SUBUNIVCODE'         => CAMPUS,
+					'SALEDATE'            => $basevalue['saleDate'],
+					'STORECODE'           => $conversion_storecode,
+					'POSID'               => $basevalue['posCode'],
+					'BILLNUMBER'          => $basevalue['billNo'],
+					'SALETYPE'            => $saletype_arr[$basevalue['saleType']], // 코드변환
+					'CREATEDATE'          => $processdate,
 					'ORDER_PLATFORMID'    => OFFER,
 					'ORDER_PLATFORMTYPE'  => PLATFORMTYPE,
-					'ORDER_AMOUNT'        => $value['saleAmount'],
-					'ORDER_TOTALAMOUNT'   => $value['totalAmount'],
-					'ORDER_DCAMOUNT'      => $value['dcAmount'],
-					'ORDER_INAMOUNT'      => $value['totalAmount'],
+					'ORDER_AMOUNT'        => $basevalue['saleAmount'],
+					'ORDER_TOTALAMOUNT'   => $basevalue['totalAmount'],
+					'ORDER_DCAMOUNT'      => $basevalue['dcAmount'],
+					'ORDER_INAMOUNT'      => $basevalue['totalAmount'],
 					'ORDER_CHANGEMONEY'   => 0,
-					'ORDER_DFREEAMOUNT'   => $value['saleTaxfreeAmount'],
-					'ORDER_TAXAMOUNT'     => $value['saleTaxAmount'],
-					'ORDER_SUPPLYAMOUNT'  => $value['supplyAmount'],
-					'ORDER_VATAMOUNT'     => $value['taxAmount'],
-					'ORDER_ORGSALEDATE'   => $value['orgSaleDate'],
-					'ORDER_ORGPOSID'      => $value['orgPosCode'],
-					'ORDER_ORGBILLNUMBER' => $value['orgBillNo'],
-					'INSERTDATE'          => date("YYYYMMDDHHmmss",time()),
+					'ORDER_DFREEAMOUNT'   => $basevalue['saleTaxfreeAmount'],
+					'ORDER_TAXAMOUNT'     => $basevalue['saleTaxAmount'],
+					'ORDER_SUPPLYAMOUNT'  => $basevalue['supplyAmount'],
+					'ORDER_VATAMOUNT'     => $basevalue['taxAmount'],
+					'ORDER_ORGSALEDATE'   => $basevalue['orgSaleDate'],
+					'ORDER_ORGPOSID'      => $basevalue['orgPosCode'],
+					'ORDER_ORGBILLNUMBER' => $basevalue['orgBillNo'],
+					'INSERTDATE'          => $processdate,
 					'INSERTID'            => INSERTID,
 				];
+				writeLog("[{$sLogFileId}] baseParams= " .json_encode($baseParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 
-                $receiptProduct  = $value['receiptProduct'];
+                $receiptProduct  = $basevalue['receiptProduct'];
+                $receiptDiscount = $basevalue['receiptDiscount'];
+                $receiptPayment  = $basevalue['receiptPayment'];
+                $receiptCard     = $basevalue['receiptCard'];
+                $receiptCash     = $basevalue['receiptCash'];
+
+				$productParams  = [];
+				$product_result = [];
+				foreach($receiptProduct as $productkey => $productvalue){
+					$productParams = [
+						'UNIVCODE'             => $univcode,
+						'SUBUNIVCODE'          => CAMPUS,
+						'SALEDATE'             => $basevalue['saleDate'],
+						'STORECODE'            => $conversion_storecode,
+					    'POSID'                => $basevalue['posCode'],
+					    'BILLNUMBER'           => $basevalue['billNo'],
+						'PRODUCT_SEQ'          => $productvalue['seq'],
+					    'SALETYPE'             => $saletype_arr[$basevalue['saleType']], // 코드변환
+						'CREATEDATE'           => $processdate,
+						'PRODUCT_ITEMCODE'     => $productvalue['productCode'],
+						'PRODUCT_ITEMNAME'     => $productvalue['productName'],
+						'PRODUCT_COST'         => $productvalue['productPrice'],
+						'PRODUCT_PRICE'        => $productvalue['productPrice'],
+						'PRODUCT_QTY'          => $productvalue['saleQty'],
+						'PRODUCT_AMOUNT'       => $productvalue['saleAmount'],
+						'PRODUCT_SALEAMOUNT'   => $productvalue['totalAmount'],
+						'PRODUCT_DCTYPE'       => $discounttype_arr[$receiptDiscount[$productkey]['dcType']],  // 코드변환
+						'PRODUCT_DCAMOUNT'     => $productvalue['dcAmount'],
+						'PRODUCT_TAXTYPE'      => $productvalue['taxAmount']>0?'T':'F',
+						'PRODUCT_SUPPLYAMOUNT' => $productvalue['supplyAmount'],
+						'PRODUCT_VATAMOUNT'    => $productvalue['taxAmount'],
+						'INSERTDATE'           => $processdate,
+					    'INSERTID'             => INSERTID,
+					];
+					writeLog("[{$sLogFileId}] productParams= " .json_encode($productParams,JSON_UNESCAPED_UNICODE), $sLogPath);
+					$product_result[] = $this->DAU->saveProduct($productParams);
+				}
+
+				$paymentParams  = [];
+				$payment_result = [];
+				foreach($receiptPayment as $paymentkey => $paymentvalue){
+					$payment_type = explode("|",$paymenttype_arr[$paymentvalue['payCode']]);
+					$paymentParams = [
+						'UNIVCODE'             => $univcode,
+						'SUBUNIVCODE'          => CAMPUS,
+						'SALEDATE'             => $basevalue['saleDate'],
+						'STORECODE'            => $conversion_storecode,
+					    'POSID'                => $basevalue['posCode'],
+					    'BILLNUMBER'           => $basevalue['billNo'],
+						'PAYMENT_SEQ'          => $paymentvalue['seq'],
+					    'SALETYPE'             => $saletype_arr[$basevalue['saleType']], // 코드변환
+						'CREATEDATE'           => $processdate,
+						'PAYMENT_METHODCODE'   => $payment_type['0'], // 코드변환explode
+						'PAYMENT_METHODNAME'   => $payment_type['1'], // 코드변환explode
+						'PAYMENT_AMOUNT'       => $paymentvalue['payAmount'],
+						'PAYMENT_INAMOUNT'     => $paymentvalue['payAmount'],
+						'PAYMENT_CHANGEMONEY'  => 0,
+						'INSERTDATE'           => $processdate,
+					    'INSERTID'             => INSERTID,
+					];
+					writeLog("[{$sLogFileId}] paymentParams= " .json_encode($paymentParams,JSON_UNESCAPED_UNICODE), $sLogPath);
+					$payment_result[] = $this->DAU->saveProduct($productParams);
+				}
+				$cardParams  = [];
+				$card_result = [];
+				foreach($cardParams as $cardkey => $cardvalue){
+					//$payment_type = explode("|",$paymenttype_arr[$paymentvalue['payCode']]);
+					$cardParams = [
+						'UNIVCODE'             => $univcode,
+						'SUBUNIVCODE'          => CAMPUS,
+						'SALEDATE'             => $basevalue['saleDate'],
+						'STORECODE'            => $conversion_storecode,
+					    'POSID'                => $basevalue['posCode'],
+					    'BILLNUMBER'           => $basevalue['billNo'],
+						'CARD_SEQ'             => $cardvalue['seq'],
+					    'SALETYPE'             => $saletype_arr[$basevalue['saleType']], // 코드변환
+						'CREATEDATE'           => $processdate,
+						'CARD_PAYNAME'         => $payment_type['0'], // 코드변환explode
+						
+						'PAYMENT_METHODNAME'   => $payment_type['1'], // 코드변환explode
+						'PAYMENT_AMOUNT'       => $paymentvalue['payAmount'],
+						'PAYMENT_INAMOUNT'     => $paymentvalue['payAmount'],
+						'PAYMENT_CHANGEMONEY'  => 0,
+						'INSERTDATE'           => $processdate,
+					    'INSERTID'             => INSERTID,
+					];
+					writeLog("[{$sLogFileId}] paymentParams= " .json_encode($paymentParams,JSON_UNESCAPED_UNICODE), $sLogPath);
+					$card_result[] = $this->DAU->saveProduct($productParams);
+				}
+
+				
+
+
+
+
             }
 
 
@@ -391,4 +514,6 @@ class dauApi extends CT_Controller {
     public function ci_ver() {
         echo CI_VERSION;
 	}
-}    
+}
+/* End of file dauapi.php */
+/* Location: ./application/controllers/dauapi.php */

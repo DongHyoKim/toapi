@@ -7,12 +7,12 @@ class Daumodel extends CI_Model {
 		//$this->CI =& get_instance();
     }
 
-    function getStorecode($codeType,$offerStorecode)
+    function getStorecode($code_type,$receive_storecode)
     {
 	    global $db;
         $db['default']['database'] = DBNAME;
 
-        $query = "SELECT DBO.FUN_TORDERSETTING('".$codeType."','".OFFER."','".$offerStorecode."') AS storeCode;";
+        $query = "SELECT DBO.FUN_TORDERSETTING('".$code_type."','".OFFER."','".$receive_storecode."') AS storeCode;";
         $results = $this->db->query($query);
 
 	    if ($results)
@@ -104,6 +104,5 @@ class Daumodel extends CI_Model {
 
 
 
-/* End of file jnu_book_model.php */
-/* Location: ./application/models/jnu_book_model.php */
-?>
+/* End of file daumodel.php */
+/* Location: ./application/models/daumodel.php */
