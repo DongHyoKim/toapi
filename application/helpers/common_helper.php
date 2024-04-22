@@ -485,3 +485,17 @@ function dateConvert($Str,$type){
 
 	return $TStr;
 }
+
+function installmentConvert($installment){
+	$CStr = "";
+	if(strlen((string)$installment == 1)){
+		$CStr = '0'.(string)$installment;
+	} else {
+		$CStr = (string)$installment;
+	}
+
+	return $CStr;
+}
+
+/* End of file common_helper.php */
+/* Location: ./application/helpers/common_helper.php */

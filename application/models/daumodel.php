@@ -52,7 +52,42 @@ class Daumodel extends CI_Model {
       
 	    return $arr;
     }        
-  function countbook($UNIVCODE, $dbName, $spName, $params) {
+
+    function save2Order($baseParams,$productParams,$paymentParams,$cardParams,$cashParams,$logParams)
+    {
+	    global $db;
+        $db['default']['database'] = DBNAME;
+
+        // transaction start
+		$this->db->trans_start();
+        $this->db->insert('['.DBNAME.'.[DBO].[TOORDER]', $baseParams);  // 주문정보
+        foreach($productParams as $value){
+            $this->db->insert('['.DBNAME.'.[DBO].[TOORDERPRODUCT]', $value);  // 주문상품정보
+        }
+        unset($value);
+        foreach($paymentParams as $value){
+            $this->db->insert('['.DBNAME.'.[DBO].[TOORDERPAYMENT]', $value);  // 주문결제정보
+        }
+        unset($value);
+        foreach($cardParams as $value){
+            $this->db->insert('['.DBNAME.'.[DBO].[TOORDERPAYMENTCARD]', $value);  // 결제상세 카드정보
+        }
+        unset($value);
+        foreach($cashParams as $value){
+            $this->db->insert('['.DBNAME.'.[DBO].[TOORDERPAYMENTCASH]', $value);  // 결제상세 현금영수증정보
+        }
+        $this->db->insert('['.DBNAME.'.[DBO].[TOORDERLOG]', $logParams);  // 주문로그
+        // transaction end
+		$this->db->trans_complete();
+
+	    //echo $this->db->last_query();
+	    //print_r($arr);
+        //exit;
+      
+        return $this->db->trans_status()? "0000" : -1;
+    }   
+
+    function countbook($UNIVCODE, $dbName, $spName, $params) {
 
 	  global $db;
       

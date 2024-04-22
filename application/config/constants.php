@@ -63,6 +63,7 @@ define('OFFER', 'DAU');
 define('DBNAME', 'VENDINGM');
 define('PLATFORMTYPE', 'KIOSK');
 define('INSERTID', 'BATCH');
+define('FLOATZERO', 0.0);
 
 /* End of file constants.php */
 /* Location: ./application/config/constants.php */
