@@ -312,7 +312,6 @@ class dauApi extends CT_Controller {
 					writeLog("[{$sLogFileId}] cashParams= " .json_encode($cashParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 				}
 
-
                 $insert_results = $this->DAU->save2Order($baseParams,$productParams,$paymentParams,$cardParams,$cashParams,$logParams);
 				if($insert_results != "0000"){
 					writeLog("[{$sLogFileId}] error bill= " .json_encode($baseParams['BILLNUMBER'],JSON_UNESCAPED_UNICODE), $sLogPath);

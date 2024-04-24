@@ -56,8 +56,11 @@ define('AES_KEY', 'toapi_gftpre_card');//AES ��ȣȭ Ű:makebot.ai�� AES2
 define('KEY_128', substr(AES_KEY, 0, 128 / 8));
 define('KEY_256', substr(AES_KEY, 0, 256 / 8));
 
+// DAU KIOSK SALE TRANS.
 define('TEST_URL', 'https://testapi.kiwoompaypos.co.kr/api/SaleReceipt/sales?searchDate=');
+define('REAL_URL', 'https://api.kiwoompaypos.co.kr/api/SaleReceipt/sales?searchDate=');
 define('TEST_AUTH', 'Y2VnbTlXdDNlZUlnL3h4M0xsaXFvQT09OmhScXNGeEVSSWJiUmdjQmh4RFZJL1E9PQ==');
+define('REAL_AUTH', 'Y2VnbTlXdDNlZUlnL3h4M0xsaXFvQT09OmhScXNGeEVSSWJiUmdjQmh4RFZJL1E9PQ==');
 define('CAMPUS', '001');
 define('OFFER', 'DAU');
 define('DBNAME', 'VENDINGM');
