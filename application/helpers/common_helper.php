@@ -488,13 +488,12 @@ function dateConvert($Str,$type){
 
 function installmentConvert($installment){
 	$CStr = "";
-	if(strlen((string)$installment == 1)){
+	if(strlen((string)$installment) == 1){
 		$CStr = '0'.(string)$installment;
 	} else {
 		$CStr = (string)$installment;
 	}
-
-	return $CStr;
+    return $CStr;
 }
 
 /* End of file common_helper.php */

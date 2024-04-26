@@ -73,7 +73,7 @@ class dauApi extends CT_Controller {
 
             $curl = curl_init();
             curl_setopt_array($curl, [
-                CURLOPT_URL            => TEST_URL.$receive_date,
+                CURLOPT_URL            => REAL_URL.$receive_date,
                 CURLOPT_RETURNTRANSFER => TRUE,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,
@@ -81,7 +81,7 @@ class dauApi extends CT_Controller {
                 CURLOPT_FOLLOWLOCATION => TRUE,
                 CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST  => 'GET',
-                CURLOPT_HTTPHEADER     => ['Authorization: Basic '.TEST_AUTH],
+                CURLOPT_HTTPHEADER     => ['Authorization: Basic '.REAL_AUTH],
             ]);
             $receive_json = curl_exec($curl);
             curl_close($curl);
@@ -218,9 +218,9 @@ class dauApi extends CT_Controller {
 						'PRODUCT_QTY'          => $productvalue['saleQty'],
 						'PRODUCT_AMOUNT'       => $productvalue['saleAmount'],
 						'PRODUCT_SALEAMOUNT'   => $productvalue['totalAmount'],
-						'PRODUCT_DCTYPE'       => (!empty($discounttype_arr[$receiptDiscount[$productkey]['dcType']]))?$discounttype_arr[$receiptDiscount[$productkey]['dcType']]:'0',  // 코드변환
+						'PRODUCT_DCTYPE'       => (!empty($discounttype_arr[$receiptDiscount[$productkey]['dcType']]))?$discounttype_arr[$receiptDiscount[$productkey]['dcType']]:'',  // 코드변환
 						'PRODUCT_DCAMOUNT'     => $productvalue['dcAmount'],
-						'PRODUCT_TAXTYPE'      => $productvalue['taxAmount']>0?'T':'F',
+						'PRODUCT_TAXTYPE'      => ($productvalue['taxAmount'] == 0)?'F':'T',
 						'PRODUCT_SUPPLYAMOUNT' => $productvalue['supplyAmount'],
 						'PRODUCT_VATAMOUNT'    => $productvalue['taxAmount'],
 						'INSERTDATE'           => $processdate,
@@ -281,7 +281,7 @@ class dauApi extends CT_Controller {
 						'CARD_ISSUERNAME'      => $cardvalue['issuerName'],  // 발급사명
 						'CARD_ACQUIRERCODE'    => (!empty($cardpurchaser_arr[$cardvalue['acquirerCode']]))?$cardpurchaser_arr[$cardvalue['acquirerCode']]:' ',  // 매입사코드(씨웨이코드 변환)
 						'CARD_ACQUIRERNAME'    => $cardvalue['acquirerName'], // 매입사명
-						'CARD_TRADEDATE'       => date("YmdHis",$cardvalue['trDateTime']),  // 거래일시
+						'CARD_TRADEDATE'       => date("YmdHis",strtotime($cardvalue['trDateTime'])),  // 거래일시
 						'CARD_APPROVALDATE'    => $cardvalue['appDate'],     // 승인일시
 						'CARD_ORGAPPDATE'      => $cardvalue['orgAppDate'],  // 반품시 원거래 판매일
 						'CARD_ORGAPPNO'        => $cardvalue['orgAppNo'],    // 반품시 원거래 승인번호
@@ -309,9 +309,9 @@ class dauApi extends CT_Controller {
 						'CASH_TID'             => $cashvalue['tid'],         // 단말기번호
 						'CASH_AMOUNT'          => $cashvalue['cashAmount'],  // 결제금액
 						'CASH_CARDNO'          => $cashvalue['cardNo'],      // 카드번호
-						'CASH_APPTYPE'         => "N",                       // 범례 N:임의,P:POS,C:CAT/VCAT
+						'CASH_APPTYPE'         => $cardapproval_arr[$cashvalue['appType']], // 범례 N:임의,P:POS,C:CAT/VCAT
 						'CASH_APPROVALNO'      => $cashvalue['appNo'],       // 승인번호
-						'CASH_TRADEDATE'       => $cardvalue['trDateTime'],  // 거래일시
+						'CASH_TRADEDATE'       => date("YmdHis",strtotime($cardvalue['trDateTime'])),  // 거래일시
 						'CASH_APPROVALDATE'    => $cardvalue['appDate'],     // 승인일시
 						'CASH_ORGAPPDATE'      => $cardvalue['orgAppDate'],  // 반품시 원거래 판매일
 						'CASH_ORGAPPNO'        => $cardvalue['orgAppNo'],    // 반품시 원거래 승인번호

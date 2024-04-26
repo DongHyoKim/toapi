@@ -60,7 +60,7 @@ define('KEY_256', substr(AES_KEY, 0, 256 / 8));
 define('TEST_URL', 'https://testapi.kiwoompaypos.co.kr/api/SaleReceipt/sales?searchDate=');
 define('REAL_URL', 'https://api.kiwoompaypos.co.kr/api/SaleReceipt/sales?searchDate=');
 define('TEST_AUTH', 'Y2VnbTlXdDNlZUlnL3h4M0xsaXFvQT09OmhScXNGeEVSSWJiUmdjQmh4RFZJL1E9PQ==');
-define('REAL_AUTH', 'Y2VnbTlXdDNlZUlnL3h4M0xsaXFvQT09OmhScXNGeEVSSWJiUmdjQmh4RFZJL1E9PQ==');
+define('REAL_AUTH', 'UWFxRktKYkhISk9mZzhRQWhYUVNMdz09OnpVL3c5bDRIdElZQ1dXTVlBc2lBMkE9PQ==');
 define('CAMPUS', '001');
 define('OFFER', 'DAU');
 define('DBNAME', 'VENDINGM');
