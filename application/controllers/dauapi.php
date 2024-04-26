@@ -18,7 +18,8 @@ class dauApi extends CT_Controller {
     //주문정보 receive api
     public function receive()
     {
-        
+		error_reporting(E_ALL&~E_WARNING);
+
     	$logs = [
             'sLogFileId'    => time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5),
             'sLogPath'      => BASEPATH . '../../logs/dauapi/' . date('Ymd') . '_receive.log',
@@ -152,7 +153,7 @@ class dauApi extends CT_Controller {
 					'SUBUNIVCODE'           => CAMPUS,
 					'SALEDATE'              => $basevalue['saleDate'],
 					'STORECODE'             => $conversion_storecode,
-					'POSID'                 => $basevalue['posCode'],
+					'POSID'                 => substr($basevalue['posCode'],-2,2),
 					'BILLNUMBER'            => $basevalue['billNo'],
 					'SALETYPE'              => $saletype_arr[$basevalue['saleType']], // 코드변환
 					'CREATEDATE'            => $processdate,
@@ -169,7 +170,7 @@ class dauApi extends CT_Controller {
 					'TOORDER_SUPPLYAMOUNT'  => $basevalue['supplyAmount'],
 					'TOORDER_VATAMOUNT'     => $basevalue['taxAmount'],
 					'TOORDER_ORGSALEDATE'   => $basevalue['orgSaleDate'],
-					'TOORDER_ORGPOSID'      => $basevalue['orgPosCode'],
+					'TOORDER_ORGPOSID'      => substr($basevalue['orgPosCode'],-2,2),
 					'TOORDER_ORGBILLNUMBER' => $basevalue['orgBillNo'],
 					'INSERTDATE'            => $processdate,
 					'INSERTID'              => INSERTID,
@@ -179,40 +180,45 @@ class dauApi extends CT_Controller {
 					'SUBUNIVCODE'         => CAMPUS,
 					'SALEDATE'            => $basevalue['saleDate'],
 					'STORECODE'           => $conversion_storecode,
-					'POSID'               => $basevalue['posCode'],
+					'POSID'               => substr($basevalue['posCode'],-2,2),
 					'BILLNUMBER'          => $basevalue['billNo'],
-                    'JSONLOG'             => $basevalue,
+                    'JSONLOG'             => json_encode($basevalue,TRUE),
 					'INSERTDATE'          => $processdate,
 					'INSERTID'            => INSERTID,
 				];
-				writeLog("[{$sLogFileId}] baseParams= " .json_encode($baseParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 
                 $receiptProduct  = $basevalue['receiptProduct'];
+				$baseParams['TOORDER_ITEMCOUNT'] = count($receiptProduct);
+
                 $receiptDiscount = $basevalue['receiptDiscount'];
+				//print_r($receiptDiscount);
+				//exit;
                 $receiptPayment  = $basevalue['receiptPayment'];
                 $receiptCard     = $basevalue['receiptCard'];
                 $receiptCash     = $basevalue['receiptCash'];
 
+				writeLog("[{$sLogFileId}] baseParams= " .json_encode($baseParams,JSON_UNESCAPED_UNICODE), $sLogPath);
+
 				$productParams  = [];
 				foreach($receiptProduct as $productkey => $productvalue){
-					$productParams = [
+					$productParams[] = [
 						'UNIVCODE'             => $univcode,
 						'SUBUNIVCODE'          => CAMPUS,
 						'SALEDATE'             => $basevalue['saleDate'],
 						'STORECODE'            => $conversion_storecode,
-					    'POSID'                => $basevalue['posCode'],
+					    'POSID'                => substr($basevalue['posCode'],-2,2),
 					    'BILLNUMBER'           => $basevalue['billNo'],
 						'PRODUCT_SEQ'          => $productvalue['seq'],
 					    'SALETYPE'             => $saletype_arr[$basevalue['saleType']], // 코드변환
 						'CREATEDATE'           => $processdate,
 						'PRODUCT_ITEMCODE'     => $productvalue['productCode'],
-						'PRODUCT_ITEMNAME'     => $productvalue['productName'],
+						'PRODUCT_ITEMNAME'     => (mb_strlen($productvalue['productName'],"UTF-8")<=15)?$productvalue['productName']:mb_substr($productvalue['productName'], 0, 15, "UTF-8"),
 						'PRODUCT_COST'         => $productvalue['productPrice'],
 						'PRODUCT_PRICE'        => $productvalue['productPrice'],
 						'PRODUCT_QTY'          => $productvalue['saleQty'],
 						'PRODUCT_AMOUNT'       => $productvalue['saleAmount'],
 						'PRODUCT_SALEAMOUNT'   => $productvalue['totalAmount'],
-						'PRODUCT_DCTYPE'       => $discounttype_arr[$receiptDiscount[$productkey]['dcType']],  // 코드변환
+						'PRODUCT_DCTYPE'       => (!empty($discounttype_arr[$receiptDiscount[$productkey]['dcType']]))?$discounttype_arr[$receiptDiscount[$productkey]['dcType']]:'0',  // 코드변환
 						'PRODUCT_DCAMOUNT'     => $productvalue['dcAmount'],
 						'PRODUCT_TAXTYPE'      => $productvalue['taxAmount']>0?'T':'F',
 						'PRODUCT_SUPPLYAMOUNT' => $productvalue['supplyAmount'],
@@ -220,42 +226,42 @@ class dauApi extends CT_Controller {
 						'INSERTDATE'           => $processdate,
 					    'INSERTID'             => INSERTID,
 					];
-					writeLog("[{$sLogFileId}] productParams= " .json_encode($productParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 				}
+				writeLog("[{$sLogFileId}] productParams= " .json_encode($productParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 
 				$paymentParams  = [];
 				foreach($receiptPayment as $paymentkey => $paymentvalue){
 					$payment_type = explode("|",$paymenttype_arr[$paymentvalue['payCode']]);
-					$paymentParams = [
+					$paymentParams[] = [
 						'UNIVCODE'             => $univcode,
 						'SUBUNIVCODE'          => CAMPUS,
 						'SALEDATE'             => $basevalue['saleDate'],
 						'STORECODE'            => $conversion_storecode,
-					    'POSID'                => $basevalue['posCode'],
+					    'POSID'                => substr($basevalue['posCode'],-2,2),
 					    'BILLNUMBER'           => $basevalue['billNo'],
 						'PAYMENT_SEQ'          => $paymentvalue['seq'],
 					    'SALETYPE'             => $saletype_arr[$basevalue['saleType']], // 코드변환
 						'CREATEDATE'           => $processdate,
-						'PAYMENT_METHODCODE'   => $payment_type['0'], // 코드변환explode
-						'PAYMENT_METHODNAME'   => $payment_type['1'], // 코드변환explode
+						'PAYMENT_METHODCODE'   => !(empty($payment_type['0']))?$payment_type['0']:' ', // 코드변환explode
+						'PAYMENT_METHODNAME'   => !(empty($payment_type['1']))?$payment_type['1']:' ', // 코드변환explode
 						'PAYMENT_AMOUNT'       => $paymentvalue['payAmount'],
 						'PAYMENT_INAMOUNT'     => $paymentvalue['payAmount'],
 						'PAYMENT_CHANGEMONEY'  => 0,
 						'INSERTDATE'           => $processdate,
 					    'INSERTID'             => INSERTID,
 					];
-					writeLog("[{$sLogFileId}] paymentParams= " .json_encode($paymentParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 				}
+				writeLog("[{$sLogFileId}] paymentParams= " .json_encode($paymentParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 
 				$cardParams  = [];
 				foreach($receiptCard as $cardkey => $cardvalue){
 					//$payment_type = explode("|",$paymenttype_arr[$paymentvalue['payCode']]);
-					$cardParams = [
+					$cardParams[] = [
 						'UNIVCODE'             => $univcode,
 						'SUBUNIVCODE'          => CAMPUS,
 						'SALEDATE'             => $basevalue['saleDate'],
 						'STORECODE'            => $conversion_storecode,
-						'POSID'                => $basevalue['posCode'],
+						'POSID'                => substr($basevalue['posCode'],-2,2),
 						'BILLNUMBER'           => $basevalue['billNo'],
 						'CARD_SEQ'             => $cardvalue['seq'],
 						'SALETYPE'             => $saletype_arr[$basevalue['saleType']], // 코드변환
@@ -263,7 +269,7 @@ class dauApi extends CT_Controller {
 						'CARD_PAYNAME'         => $payment_type['0'],        // 결제구분 코드변환explode  ** 다시해야함
 						'CARD_VANNAME'         => OFFER,                     // VAN사명
 						'CARD_TID'             => $cardvalue['tid'],         // TID
-						'CARD_APPTYPE'         => "N",                       // 범례 N:임의,P:POS,C:CAT/VCAT
+						'CARD_APPTYPE'         => $cardapproval_arr[$cardvalue['appType']], // 범례 N:임의,P:POS,C:CAT/VCAT
 						'CARD_CARDNO'          => $cardvalue['cardNo'],      // 카드번호
 						'CARD_APPROVALNO'      => $cardvalue['appNo'],       // 승인번호
 						'CARD_AMOUNT'          => $cardvalue['cardAmount'],  // 결제금액
@@ -272,28 +278,28 @@ class dauApi extends CT_Controller {
 						'CARD_COUPONAMOUNT'    => FLOATZERO,                 // 상품권선불카드금액
 						'CARD_INSTALLMENT'     => installmentConvert($cardvalue['installment']), // 할부개월수(문자열)
 						'CARD_ISSUERCODE'      => $cardvalue['issuerCode'],  // 발급사코드
-						'CARD_ISSUERNANE'      => $cardvalue['issuerName'],  // 발급사명
-						'CARD_ACQUIRERCODE'    => $cardpurchaser_arr[$cardvalue['acquirerCode']],  // 매입사코드(씨웨이코드 변환)
+						'CARD_ISSUERNAME'      => $cardvalue['issuerName'],  // 발급사명
+						'CARD_ACQUIRERCODE'    => (!empty($cardpurchaser_arr[$cardvalue['acquirerCode']]))?$cardpurchaser_arr[$cardvalue['acquirerCode']]:' ',  // 매입사코드(씨웨이코드 변환)
 						'CARD_ACQUIRERNAME'    => $cardvalue['acquirerName'], // 매입사명
-						'CARD_TRADEDATE'       => $cardvalue['trDateTime'],  // 거래일시
+						'CARD_TRADEDATE'       => date("YmdHis",$cardvalue['trDateTime']),  // 거래일시
 						'CARD_APPROVALDATE'    => $cardvalue['appDate'],     // 승인일시
 						'CARD_ORGAPPDATE'      => $cardvalue['orgAppDate'],  // 반품시 원거래 판매일
 						'CARD_ORGAPPNO'        => $cardvalue['orgAppNo'],    // 반품시 원거래 승인번호
 						'INSERTDATE'           => $processdate,
 						'INSERTID'             => INSERTID,
 					];
-					writeLog("[{$sLogFileId}] cardParams= " .json_encode($cardParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 				}
+				writeLog("[{$sLogFileId}] cardParams= " .json_encode($cardParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 
 				$cashParams  = [];
 				foreach($receiptCash as $cashkey => $cashvalue){
 					//$payment_type = explode("|",$paymenttype_arr[$paymentvalue['payCode']]);
-					$cashParams = [
+					$cashParams[] = [
 						'UNIVCODE'             => $univcode,
 						'SUBUNIVCODE'          => CAMPUS,
 						'SALEDATE'             => $basevalue['saleDate'],
 						'STORECODE'            => $conversion_storecode,
-						'POSID'                => $basevalue['posCode'],
+						'POSID'                => substr($basevalue['posCode'],-2,2),
 						'BILLNUMBER'           => $basevalue['billNo'],
 						'CASH_SEQ'             => $cashvalue['seq'],
 						'SALETYPE'             => $saletype_arr[$basevalue['saleType']], // 코드변환
@@ -312,8 +318,9 @@ class dauApi extends CT_Controller {
 						'INSERTDATE'           => $processdate,
 						'INSERTID'             => INSERTID,
 					];
-					writeLog("[{$sLogFileId}] cashParams= " .json_encode($cashParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 				}
+				writeLog("[{$sLogFileId}] cashParams= " .json_encode($cashParams,JSON_UNESCAPED_UNICODE), $sLogPath);
+				writeLog("[{$sLogFileId}] logParams= " .json_encode($logParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 
                 $insert_results = $this->DAU->save2Order($baseParams,$productParams,$paymentParams,$cardParams,$cashParams,$logParams);
 				if($insert_results != "0000"){
