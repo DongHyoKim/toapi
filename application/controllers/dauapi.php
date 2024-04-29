@@ -85,13 +85,15 @@ class dauApi extends CT_Controller {
             ]);
             $receive_json = curl_exec($curl);
             curl_close($curl);
-            
             //echo $receive_json;
             //exit;
         
 		    // json data Receive
 			$receive_arr  = [];
             $receive_temp = json_decode($receive_json, TRUE);
+            //echo $receive_temp;
+            //exit;
+			
             $receive_arr  = json_decode($receive_temp, TRUE);
             //$receive_arr = stripslashes($receive_arr);
             //print_r($receive_arr);
@@ -218,7 +220,8 @@ class dauApi extends CT_Controller {
 						'PRODUCT_QTY'          => $productvalue['saleQty'],
 						'PRODUCT_AMOUNT'       => $productvalue['saleAmount'],
 						'PRODUCT_SALEAMOUNT'   => $productvalue['totalAmount'],
-						'PRODUCT_DCTYPE'       => (!empty($discounttype_arr[$receiptDiscount[$productkey]['dcType']]))?$discounttype_arr[$receiptDiscount[$productkey]['dcType']]:'',  // 코드변환
+						//'PRODUCT_DCTYPE'       => (!empty($discounttype_arr[$receiptDiscount[$productkey]['dcType']]))?$discounttype_arr[$receiptDiscount[$productkey]['dcType']]:'',  // 코드변환
+						'PRODUCT_DCTYPE'       => (!empty($receiptDiscount[$productkey]['dcType']))?$receiptDiscount[$productkey]['dcType']:'',  // 코드변환
 						'PRODUCT_DCAMOUNT'     => $productvalue['dcAmount'],
 						'PRODUCT_TAXTYPE'      => ($productvalue['taxAmount'] == 0)?'F':'T',
 						'PRODUCT_SUPPLYAMOUNT' => $productvalue['supplyAmount'],
@@ -255,7 +258,6 @@ class dauApi extends CT_Controller {
 
 				$cardParams  = [];
 				foreach($receiptCard as $cardkey => $cardvalue){
-					//$payment_type = explode("|",$paymenttype_arr[$paymentvalue['payCode']]);
 					$cardParams[] = [
 						'UNIVCODE'             => $univcode,
 						'SUBUNIVCODE'          => CAMPUS,
@@ -266,28 +268,51 @@ class dauApi extends CT_Controller {
 						'CARD_SEQ'             => $cardvalue['seq'],
 						'SALETYPE'             => $saletype_arr[$basevalue['saleType']], // 코드변환
 						'CREATEDATE'           => $processdate,
-						'CARD_PAYNAME'         => $payment_type['0'],        // 결제구분 코드변환explode  ** 다시해야함
-						'CARD_VANNAME'         => OFFER,                     // VAN사명
-						'CARD_TID'             => $cardvalue['tid'],         // TID
+						'CARD_PAYNAME'         => $paymentParams[$cardkey]['PAYMENT_METHODCODE'],  // 하단재처리 : 결제구분 코드
+						'CARD_VANNAME'         => OFFER,                      // VAN사명
+						'CARD_TID'             => $cardvalue['tid'],          // TID
 						'CARD_APPTYPE'         => $cardapproval_arr[$cardvalue['appType']], // 범례 N:임의,P:POS,C:CAT/VCAT
-						'CARD_CARDNO'          => $cardvalue['cardNo'],      // 카드번호
-						'CARD_APPROVALNO'      => $cardvalue['appNo'],       // 승인번호
-						'CARD_AMOUNT'          => $cardvalue['cardAmount'],  // 결제금액
-						'CARD_CARDAMOUNT'      => $cardvalue['cardAmount'],  // 카드(페이)금액
-						'CARD_POINTAMOUNT'     => FLOATZERO,                 // 포인트금액
-						'CARD_COUPONAMOUNT'    => FLOATZERO,                 // 상품권선불카드금액
+						'CARD_CARDNO'          => $cardvalue['cardNo'],       // 카드번호
+						'CARD_APPROVALNO'      => $cardvalue['appNo'],        // 승인번호
+						'CARD_AMOUNT'          => $cardvalue['cardAmount'],   // 하단재처리: 결제금액
+						'CARD_CARDAMOUNT'      => $cardvalue['cardAmount'],   // 하단재처리: 카드(페이)금액
+						'CARD_POINTAMOUNT'     => FLOATZERO,                  // 하단재처리: 포인트금액
+						'CARD_COUPONAMOUNT'    => FLOATZERO,                  // 하단재처리: 상품권선불카드금액
 						'CARD_INSTALLMENT'     => installmentConvert($cardvalue['installment']), // 할부개월수(문자열)
-						'CARD_ISSUERCODE'      => $cardvalue['issuerCode'],  // 발급사코드
-						'CARD_ISSUERNAME'      => $cardvalue['issuerName'],  // 발급사명
+						'CARD_ISSUERCODE'      => $cardvalue['issuerCode'],   // 발급사코드
+						'CARD_ISSUERNAME'      => $cardvalue['issuerName'],   // 발급사명
 						'CARD_ACQUIRERCODE'    => (!empty($cardpurchaser_arr[$cardvalue['acquirerCode']]))?$cardpurchaser_arr[$cardvalue['acquirerCode']]:' ',  // 매입사코드(씨웨이코드 변환)
 						'CARD_ACQUIRERNAME'    => $cardvalue['acquirerName'], // 매입사명
 						'CARD_TRADEDATE'       => date("YmdHis",strtotime($cardvalue['trDateTime'])),  // 거래일시
-						'CARD_APPROVALDATE'    => $cardvalue['appDate'],     // 승인일시
-						'CARD_ORGAPPDATE'      => $cardvalue['orgAppDate'],  // 반품시 원거래 판매일
-						'CARD_ORGAPPNO'        => $cardvalue['orgAppNo'],    // 반품시 원거래 승인번호
+						'CARD_APPROVALDATE'    => $cardvalue['appDate'],      // 승인일시
+						'CARD_ORGAPPDATE'      => $cardvalue['orgAppDate'],   // 반품시 원거래 판매일
+						'CARD_ORGAPPNO'        => $cardvalue['orgAppNo'],     // 반품시 원거래 승인번호
 						'INSERTDATE'           => $processdate,
 						'INSERTID'             => INSERTID,
 					];
+					
+					$var_arr = [
+						'payment_seq'   => $cardkey,
+                        'payment_type'  => $paymentParams[$cardkey]['PAYMENT_METHODCODE'],
+						'payment_name'  => $paymentParams[$cardkey]['PAYMENT_METHODNAME'],
+						'issuer_code'   => $cardvalue['issuerCode'],
+						'issuer_name'   => $cardvalue['issuerName'],
+						'acquirerCode'  => $cardvalue['acquirerCode'],
+						'acquirer_name' => $cardvalue['acquirerName'],
+						'card_amount'   => $cardvalue['cardAmount'],
+					];
+					writeLog("[{$sLogFileId}] cardPaynameSelect_arr= " .json_encode($var_arr,JSON_UNESCAPED_UNICODE), $sLogPath);
+					$payName = cardPaynameSelect($var_arr);
+					writeLog("[{$sLogFileId}] cardPaynameSelect_res= " .json_encode($payName,JSON_UNESCAPED_UNICODE), $sLogPath);
+					if($payName['rename_flag'] == 'Y'){
+						$paymentParams[$cardkey]['PAYMENT_METHODCODE'] = $payName['PAYMENT_METHODCODE'];
+						$paymentParams[$cardkey]['PAYMENT_METHODNAME'] = $payName['PAYMENT_METHODNAME'];
+						$cardParams[$cardkey]['CARD_PAYNAME']                    = $payName['CARD_PAYNAME'];
+						$cardParams[$cardkey]['CARD_AMOUNT']                     = $payName['CARD_AMOUNT'];
+						$cardParams[$cardkey]['CARD_CARDAMOUNT']                 = $payName['CARD_CARDAMOUNT'];
+						$cardParams[$cardkey]['CARD_POINTAMOUNT']                = $payName['CARD_POINTAMOUNT'];
+						$cardParams[$cardkey]['CARD_COUPONAMOUNT']               = $payName['CARD_COUPONAMOUNT'];
+					}
 				}
 				writeLog("[{$sLogFileId}] cardParams= " .json_encode($cardParams,JSON_UNESCAPED_UNICODE), $sLogPath);
 

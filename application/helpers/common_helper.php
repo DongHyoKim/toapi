@@ -496,5 +496,64 @@ function installmentConvert($installment){
     return $CStr;
 }
 
+function cardPaynameSelect($var_arr){
+    /*
+        'payment_seq'   => $cardkey,
+        'payment_type'  => $paymentParams[$cardkey]['PAYMENT_METHODCODE'],
+        'payment_name'  => $paymentParams[$cardkey]['PAYMENT_METHODNAME'],
+        'issuer_code'   => $cardvalue['issuerCode'],
+        'issuer_name'   => $cardvalue['issuerName'],
+        'acquirerCode'  => $cardvalue['acquirerCode'],
+        'acquirer_name' => $cardvalue['acquirerName'],
+        'card_amount'   => $cardvalue['cardAmount'],
+    */
+    $result_arr = [
+        'rename_flag'        => 'N',
+        'PAYMENT_METHODCODE' => '',
+        'PAYMENT_METHODNAME' => '',
+        'CARD_PAYNAME'       => '',
+        'CARD_AMOUNT'        => 0.0,
+        'CARD_CARDAMOUNT'    => 0.0,
+        'CARD_POINTAMOUNT'   => 0.0,
+        'CARD_COUPONAMOUNT'  => 0.0,
+    ];
+
+    if($var_arr['payment_type'] == 'CARD'){
+        if($var_arr['acquirer_name'] == '카카오페이'){
+            $result_arr['rename_flag']        = 'Y';
+            $result_arr['PAYMENT_METHODCODE'] = 'KAKAOPAY';
+            $result_arr['PAYMENT_METHODNAME'] = '카카오페이';
+            $result_arr['CARD_PAYNAME']       = 'KAKAOPAY';
+            $result_arr['CARD_AMOUNT']        = $var_arr['card_amount'];
+            $result_arr['CARD_POINTAMOUNT']   = $var_arr['card_amount'];            
+        }elseif($var_arr['acquirer_name'] == 'PAYCO'){
+            $result_arr['rename_flag']        = 'Y';
+            $result_arr['PAYMENT_METHODCODE'] = 'PAYCO';
+            $result_arr['PAYMENT_METHODNAME'] = '페이코';
+            $result_arr['CARD_PAYNAME']       = 'PAYCO';
+            $result_arr['CARD_AMOUNT']        = $var_arr['card_amount'];
+            $result_arr['CARD_CARDAMOUNT']    = $var_arr['card_amount'];  
+        }
+        if($var_arr['issuer_name'] == '네이버파이낸셜'){
+            $result_arr['rename_flag']        = 'Y';
+            $result_arr['PAYMENT_METHODCODE'] = 'NAVERPAY';
+            $result_arr['PAYMENT_METHODNAME'] = '네이버페이';
+            $result_arr['CARD_PAYNAME']       = 'NAVERPAY';
+            $result_arr['CARD_AMOUNT']        = $var_arr['card_amount'];
+            $result_arr['CARD_CARDAMOUNT']    = $var_arr['card_amount'];              
+        }
+
+    } elseif($var_arr['payment_type'] == 'PAYCO'){
+        $result_arr['rename_flag']        = 'Y';
+        $result_arr['PAYMENT_METHODCODE'] = 'PAYCO';
+        $result_arr['PAYMENT_METHODNAME'] = '페이코';
+        $result_arr['CARD_PAYNAME']       = 'PAYCO';
+        $result_arr['CARD_AMOUNT']        = $var_arr['card_amount'];
+        $result_arr['CARD_POINTAMOUNT']   = $var_arr['card_amount'];
+    }
+
+    return $result_arr;
+}
+
 /* End of file common_helper.php */
 /* Location: ./application/helpers/common_helper.php */
