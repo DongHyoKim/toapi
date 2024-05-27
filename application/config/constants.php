@@ -67,6 +67,7 @@ define('DBNAME', 'VENDINGM');
 define('PLATFORMTYPE', 'KIOSK');
 define('INSERTID', 'BATCH');
 define('FLOATZERO', 0.0);
+define('CURL_HOST', 'https://toapi.cway.co.kr/dauapi/receive');
 
 /* End of file constants.php */
 /* Location: ./application/config/constants.php */

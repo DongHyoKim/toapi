@@ -555,5 +555,69 @@ function cardPaynameSelect($var_arr){
     return $result_arr;
 }
 
+/**
+ * execCurl
+ *
+ * @access public
+ * @param String $strHost
+ * @param String $strMemod
+ * @param Array $params
+ * @return Array $rgResponse
+ * @description curl 처리
+ */
+function execCurl($strHost, $strMemod='GET', $params=array(), $headers=array())
+{
+    $ch = curl_init();
+    /** SSL: 여부 */
+    if(stripos($strHost, 'https://') !== FALSE) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    }
+    /** POST/GET 설정 */
+    if(strtoupper($strMemod) == 'POST' || strtoupper($strMemod) == 'POSTJSON' || strtoupper($strMemod) == 'POSTXML') {
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_URL, $strHost);
+        curl_setopt($ch, CURLOPT_FRESH_CONNECT, 1);
+        curl_setopt($ch, CURLOPT_FORBID_REUSE, 1);
+
+        if(strtoupper($strMemod) == 'POST') 
+        {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+        }
+        else if(strtoupper($strMemod) == 'POSTXML') 
+        {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $params);	
+        }
+        else
+        {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
+        }
+    }
+    else {
+        //curl_setopt($ch, CURLOPT_URL, $strHost . ((strpos($strHost, '?') === FALSE) ? '?' : '&') . http_build_query($params));
+        curl_setopt($ch, CURLOPT_URL, $strHost);
+    }
+    
+    if(sizeof($headers)>0){
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    }
+
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+
+    $rgResponse = array();
+    if( !$response = curl_exec($ch) ) {
+        $rgResponse['http_code']	= 999;
+        $rgResponse['res_body']	= curl_error($ch);
+    } else {
+        $rgResponse['http_code']	= curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $rgResponse['res_body']		= $response;
+    }
+    curl_close($ch);
+
+    return $rgResponse;
+}
+
 /* End of file common_helper.php */
 /* Location: ./application/helpers/common_helper.php */

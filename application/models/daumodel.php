@@ -90,57 +90,46 @@ class Daumodel extends CI_Model {
         return $this->db->trans_status()? "0000" : -1;
     }   
 
-    function countbook($UNIVCODE, $dbName, $spName, $params) {
+    function delete2Order($params)
+    {
+	    global $db;
+        $db['default']['database'] = DBNAME;
 
-	  global $db;
-      
-      $db['default']['database'] = $dbName;
-      $sp = "[".$dbName."].[dbo].[".$spName."] ?,?,?,?,?";
-	  $results = $this->db->query($sp,array($params['UNIVCODE'],
-			                       $params['STORECODE'],
-     			                   $params['ISBN'],
-			                       $params['BOOKNAME'],
-			                       $params['AUTHORNAME'])); 
-	  if ($results) {
-          $arr = $results->result_array();
-      } else {
-          $arr = null;   
-      }
-	  //echo $this->db->last_query();
-	  //print_r($arr['0']['CNT']);
-	  //exit;
-      
-	  return $arr['0']['CNT'];
-  }
+        $query = "SELECT  count(STORECODE) as CNT FROM [".DBNAME."].[DBO].[TOORDER] 
+                  WHERE   UNIVCODE = '".$params['UNIVCODE']."' AND SUBUNIVCODE = '".$params['SUBUNIVCODE']."' 
+                  AND     SALEDATE = '".$params['SALEDATE']."' AND STORECODE = '".$params['STORECODE']."';";
+        $results = $this->db->query($query);
 
-  function selectbook($UNIVCODE, $dbName, $spName, $params) {
+	    if ($results){
+            $arr = $results->result_array();
+        } else {
+            $arr = null;   
+        }
+	    //echo $this->db->last_query();
+	    //print_r($arr);
+        //exit;
+        if($arr['0'] != 0){
+            // transaction start
+		    $this->db->trans_start();
+            $this->db->delete('['.DBNAME.'].[DBO].[TOORDER]', $params);
+            $this->db->delete('['.DBNAME.'].[DBO].[TOORDERPRODUCT]', $params);
+            $this->db->delete('['.DBNAME.'].[DBO].[TOORDERPAYMENT]', $params);
+            $this->db->delete('['.DBNAME.'].[DBO].[TOORDERPAYMENTCARD]', $params);
+            $this->db->delete('['.DBNAME.'].[DBO].[TOORDERPAYMENTCASH]', $params);
+            $this->db->delete('['.DBNAME.'].[DBO].[TOORDERLOG]', $params);
+            // transaction end
+		    $this->db->trans_complete();
 
-	  global $db;
-
-      $db['default']['database'] = $dbName;
-      $sp = "[".$dbName."].[dbo].[".$spName."] ?,?,?,?,?,?,?";
-	  $results = $this->db->query($sp,array($params['UNIVCODE'],
-			                       $params['STORECODE'],
-     			                   $params['ISBN'],
-			                       $params['BOOKNAME'],
-			                       $params['AUTHORNAME'],
-                            	   $params['PAGE_ROW'],
-		                           $params['PAGE_NO']));
-	  if ($results) {
-          $arr = $results->result_array();
-      } else {
-          $arr = null;
-      }
-	  //echo $this->db->last_query();
-	  //print_r($arr);
-	  //exit;
-
-	  return $arr;
-  }
+	        //echo $this->db->last_query();
+	        //print_r($arr);
+            //exit;
+            return $this->db->trans_status()? "0000" : -1;
+        } else {
+            return "0000";
+        }
+        
+    }
 
 }
-
-
-
 /* End of file daumodel.php */
 /* Location: ./application/models/daumodel.php */

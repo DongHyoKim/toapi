@@ -365,6 +365,89 @@ class dauApi extends CT_Controller {
 		return $results;
 	}
 
+    //crontab 자동화
+    public function cron_receive() {
+
+		//error_reporting(E_ALL&~E_WARNING);
+
+    	$logs = [
+            'sLogFileId'    => time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5),
+            'sLogPath'      => BASEPATH . '../../logs/dauapi/' . date('Ymd') . '_cron_receive.log',
+            'bLogable'      => true
+        ];
+
+        $sLogFileId  = time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5);
+        $sLogPath    = BASEPATH . '../../logs/dauapi/' . date('Ymd') . '_cron_receive.log';
+        $bLogable    = true;
+
+        $results = [
+            'success'    => RES_CODE_SUCCESS,
+            'msg'        => '',
+        ];
+		writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
+
+        try
+        {
+			$yesterday = date('Ymd', $_SERVER['REQUEST_TIME']-86400);
+
+			$params = [
+				'UNIVCODE'     => '00113',    // 이대
+				'SUBUNIVBCODE' => '001',      // 서울캠퍼스
+				'SALEDATE'     => $yesterday,
+				'STORECODE'    => '3000200'   // 김옥길기념관카페
+			];
+			
+			writeLog("[{$sLogFileId}] delete_params=" . json_encode($params,JSON_UNESCAPED_UNICODE), $sLogPath);
+			$delete_result = $this->DAU->delete2Order($params);
+
+			if($delete_result == "0000"){
+				$custom_arr = [
+					'00113' => '107580001',
+				];
+				writeLog("[{$sLogFileId}] custom_arr=" . json_encode($custom_arr,JSON_UNESCAPED_UNICODE), $sLogPath);
+
+				$host      = CURL_HOST;
+				$headers   = [
+								'univcode: 00113',     //.array_keys($custom_arr),
+								'Content-Type: application/x-www-form-urlencoded',
+							];
+	
+				foreach($custom_arr as $key => $value){
+					$params = [
+						'univcode'      => $key,
+						'receive_date'  => $yesterday,
+						'receive_store' => $value,
+					];
+					$curl_result = execCurl($host, 'POST', $params, $headers);
+					if($curl_result['http_code'] != "200") {
+						$results['success'] = "9999";
+						$results['msg']     = $yesterday." API서버와 통신에 실패하였습니다!";
+						writeLog("[{$sLogFileId}] comm_err=" . json_encode($results,JSON_UNESCAPED_UNICODE), $sLogPath);
+						throw new Exception("API서버와 통신에 실패하였습니다!");
+					}
+					$json_decode_array = json_decode($curl_result['res_body'],TRUE);
+	
+					if($json_decode_array['res_code'] != "0000"){
+						$results['success']   = $json_decode_array['res_code'];
+						$results['msg']       = $json_decode_array['res_msg'];
+					} else {  
+						$results['msg']       = $json_decode_array['res_msg'];
+					}
+				}
+	
+			}
+			
+		} 
+		catch(File_exception $e) 
+		{
+			$results['success'] = $e->error;
+			$results['msg']     = $e->message;
+		}
+		writeLog("[{$sLogFileId}] results= " . json_encode($results,JSON_UNESCAPED_UNICODE), $sLogPath);
+		writeLog("[{$sLogFileId}] -------------------------------- END --------------------------------", $sLogPath, $bLogable);
+		return $results;
+	}
+
     //주문정보 테스트
     public function ci_ver() {
         echo CI_VERSION;
