@@ -565,13 +565,15 @@ function cardPaynameSelect($var_arr){
  * @return Array $rgResponse
  * @description curl 처리
  */
-function execCurl($strHost, $strMemod='GET', $params=array(), $headers=array())
+
+ function execCurl($strHost, $strMemod='GET', $params=array(), $headers=array())
 {
     $ch = curl_init();
     /** SSL: 여부 */
     if(stripos($strHost, 'https://') !== FALSE) {
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
     }
     /** POST/GET 설정 */
     if(strtoupper($strMemod) == 'POST' || strtoupper($strMemod) == 'POSTJSON' || strtoupper($strMemod) == 'POSTXML') {

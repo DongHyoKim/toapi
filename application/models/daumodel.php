@@ -106,9 +106,10 @@ class Daumodel extends CI_Model {
             $arr = null;   
         }
 	    //echo $this->db->last_query();
+        //echo("Count:".$arr['0'][CNT]);
 	    //print_r($arr);
         //exit;
-        if($arr['0'] != 0){
+        if($arr['0']['CNT'] != 0){
             // transaction start
 		    $this->db->trans_start();
             $this->db->delete('['.DBNAME.'].[DBO].[TOORDER]', $params);
