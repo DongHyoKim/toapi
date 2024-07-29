@@ -124,14 +124,16 @@ class Jnu_api extends CT_Controller {
 		    'barcodeno'      => $tmp_arr['barcodeno'],
 		    'mileage'        => $tmp_balance,
 	    ];
+        $message['successMessage'] = $results;
 
-		writeLog("[{$sLogFileId}] results=".json_encode($results,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+		writeLog("[{$sLogFileId}] message=".json_encode($message,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
 		//print_r($results);
 		//exit;
 
         writeLog("[{$sLogFileId}] -------------------------------- END --------------------------------", $sLogPath, $bLogable);
 		
-		echo json_encode($results,JSON_UNESCAPED_UNICODE);
+		echo json_encode($message,JSON_UNESCAPED_UNICODE);
+        return;
 	}
 
 	function insertMileage(){
@@ -167,18 +169,18 @@ class Jnu_api extends CT_Controller {
 
         writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
 
-        $univcode    = $this->input->post('univcode',true);     // 대학코드
-        $subunivcode = $this->input->post('subunivcode',true);  // 캠퍼스코드
-        $barcodeno   = $this->input->post('barcodeno',true);    // 조합원번호
-        $usedate     = $this->input->post('usedate',true);      // 영업일 구매 년월일시분초(14=8+6)
-        $deptcode    = $this->input->post('deptcode',true);     // 매장코드     (카페아띠 2001000 / 카페지젤 2000500)
-        $posno       = $this->input->post('posno',true);        // 포스일련번호 (카페아띠 K1,K2   / 카페지젪 K1)
-        $billnumber  = $this->input->post('billnumber',true);   // 영수번호
+        $univcode    = $this->input->post('univcode',true);     // 대학코드: 00116
+        $subunivcode = $this->input->post('subunivcode',true);  // 캠퍼스코드: 001
+        $barcodeno   = $this->input->post('barcodeno',true);    // 조합원번호: 7001 1600 0000 256 4
+        $usedate     = $this->input->post('usedate',true);      // 영업일: 구매영업일자 년월일(8자리)입력시 자동으로 14자리 변환됨
+        $deptcode    = $this->input->post('deptcode',true);     // 매장코드:     (카페아띠 2001000 / 카페지젤 2000500)
+        $posno       = $this->input->post('posno',true);        // 포스일련번호: (카페아띠 K1,K2   / 카페지젪 K1)
+        $billnumber  = $this->input->post('billnumber',true);   // 영수번호: 해당 영업일 영수번호
         $usemileage  = $this->input->post('usemileage',true);   // 포인트 사용금액(반품시 - 음수로)
         $amount      = $this->input->post('amount',true);       // 이용고 금액(반품시 - 음수로) 포인트/이용고 다름
         $amountsave  = $this->input->post('amountsave',true);   // 포인트 적립금액(반품시 - 음수로)
         $remark      = $this->input->post('remark',true);       // 설명, 적요
-
+       
         if(empty($univcode)){
 			$message['rCode']                 = "0001";
             $message['error']['errorCode']    = "0001";
@@ -210,10 +212,10 @@ class Jnu_api extends CT_Controller {
             writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'],JSON_UNESCAPED_UNICODE)." eMessage=".json_encode($message['error']['errorMessage'],JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
             echo json_encode($message);
             exit;
-		} else if(strlen($usedate) != 14){
+		} else if(strlen($usedate) != 8){
 			$message['rCode']                 = "0005";
             $message['error']['errorCode']    = "0005";
-            $message['error']['errorMessage'] = "영업일이 14자리가 아닙니다!";
+            $message['error']['errorMessage'] = "영업일이 8자리가 아닙니다!";
             writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'],JSON_UNESCAPED_UNICODE)." eMessage=".json_encode($message['error']['errorMessage'],JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
             echo json_encode($message);
             exit;
@@ -225,7 +227,7 @@ class Jnu_api extends CT_Controller {
             writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'],JSON_UNESCAPED_UNICODE)." eMessage=".json_encode($message['error']['errorMessage'],JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
             echo json_encode($message);
             exit;
-		} else if($deptcode != "2001000" || $deptcode != "2000500"){
+		} else if($deptcode != "2001000" && $deptcode != "2000500"){
 			$message['rCode']                 = "0007";
             $message['error']['errorCode']    = "0007";
             $message['error']['errorMessage'] = "지정된 매장코드가 아닙니다!";
@@ -256,53 +258,36 @@ class Jnu_api extends CT_Controller {
             echo json_encode($message);
             exit;
 		}
-        if(empty($usemileage)){
-			$message['rCode']                 = "0011";
-            $message['error']['errorCode']    = "0011";
-            $message['error']['errorMessage'] = "사용마일리지가 없습니다!";
-            writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'],JSON_UNESCAPED_UNICODE)." eMessage=".json_encode($message['error']['errorMessage'],JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
-            echo json_encode($message);
-            exit;
-		}
-        if(empty($amount)){
-			$message['rCode']                 = "0012";
-            $message['error']['errorCode']    = "0012";
-            $message['error']['errorMessage'] = "이용고적립액이 없습니다!";
-            writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'],JSON_UNESCAPED_UNICODE)." eMessage=".json_encode($message['error']['errorMessage'],JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
-            echo json_encode($message);
-            exit;
-		}
-        if(empty($amountsave)){
-			$message['rCode']                 = "0013";
-            $message['error']['errorCode']    = "0013";
-            $message['error']['errorMessage'] = "포인트적립액이 없습니다!";
-            writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'],JSON_UNESCAPED_UNICODE)." eMessage=".json_encode($message['error']['errorMessage'],JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
-            echo json_encode($message);
-            exit;
-		}
-        if(empty($remark)){
-            $remark = ' ';
-		}
+        if(empty($usemileage)) $usemileage = 0;  // 마일리지 사용액
+        if(empty($amount))     $amount     = 0;  // 이용고적립액
+        if(empty($amountsave)) $amountsave = 0;  // 포인트적립액
+        if(empty($remark))     $remark = ' ';    // 적요
+		
 		$post_data = [
-			'univcode'    => $univcode,
-			'subunivcode' => $subunivcode,
 			'barcodeno'   => $barcodeno,
 			'usedate'     => $usedate,
 			'deptcode'    => $deptcode,
 			'posno'       => $posno,
 			'billnumber'  => $billnumber,
-			'usemileage'  => $usemileage,
-			'amount'      => $amount,
-			'amountsave'  => $amountsave,
+			'usemileage'  => $usemileage,  // 마일리지사용액 없는 경우 0
+			'amount'      => $amount,      // 이용고적립액   없는 경우 0
+            'amountsave'  => $amountsave,  // 포인트적립액   없는 경우 0
 			'remark'      => $remark,
+			'univcode'    => $univcode,
+			'subunivcode' => $subunivcode,
 		];
 		writeLog("[{$sLogFileId}] post_data=".json_encode($post_data,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
 
         $tmp_result = $this->API->insertMileage($post_data);
+        writeLog("[{$sLogFileId}] tmp_result=".json_encode($tmp_result,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
 
+        if($tmp_result['USEMILEAGE'] < 0) $tmp_result['MILEAGESAVE'] = 0;                                           // -0 처리
+        if(is_float($tmp_result['MILEAGESAVE'])) $tmp_result['MILEAGESAVE'] = round($tmp_result['MILEAGESAVE'],0);  // 반올림
 
-
-
+        $message['successMessage'] = $tmp_result;
+        writeLog("[{$sLogFileId}] -------------------------------- END --------------------------------", $sLogPath, $bLogable);
+		echo json_encode($message,JSON_UNESCAPED_UNICODE);
+        return;
 	}
 
     //한글인코딩 변경 euc-kr변경

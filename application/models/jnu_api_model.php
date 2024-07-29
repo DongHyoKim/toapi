@@ -70,7 +70,7 @@ class Jnu_api_model extends CI_Model {
 		global $db;
  
 		$db['default']['database'] = "CPT".$params['univcode'].$params['subunivcode'];
-		$sp = $db.".[dbo].[SP_SERVICE_POS_CPTMILINS]";
+		$sp ="CPT".$params['univcode'].$params['subunivcode'].".[dbo].[SP_SERVICE_POS_CPTMILINS]";
   
 		$i = 0;
 		$params_str = '';
@@ -83,7 +83,7 @@ class Jnu_api_model extends CI_Model {
 			}
 			$i++;
 		}
-		//echo $params;
+		//echo $params_str;
 		//exit;
 
 		$sp = $sp." ".$params_str;
@@ -94,9 +94,9 @@ class Jnu_api_model extends CI_Model {
 		} else {
 			$arr = null;   
 		}
-		echo $this->db->last_query();
+		//echo $this->db->last_query();
 		//print_r($arr['0']);
-		exit;
+		//exit;
 		
 		return $arr['0'];
 	}
