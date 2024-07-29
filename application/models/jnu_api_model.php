@@ -64,6 +64,42 @@ class Jnu_api_model extends CI_Model {
       
 	    return $row['MILEAGE'];
 	}
+
+	function insertMileage($params) {
+      
+		global $db;
+ 
+		$db['default']['database'] = "CPT".$params['univcode'].$params['subunivcode'];
+		$sp = $db.".[dbo].[SP_SERVICE_POS_CPTMILINS]";
+  
+		$i = 0;
+		$params_str = '';
+		foreach($params as $k => $v){
+			//if(!$v) $params_array[$k] = " ";
+			if($i == count($params) - 1){
+				$params_str .= '"'.$v.'"';
+			} else {
+				  $params_str .= '"'.$v.'",';
+			}
+			$i++;
+		}
+		//echo $params;
+		//exit;
+
+		$sp = $sp." ".$params_str;
+		$results = $this->db->query($sp);
+  
+		if ($results) {
+			$arr = $results->result_array();
+		} else {
+			$arr = null;   
+		}
+		echo $this->db->last_query();
+		//print_r($arr['0']);
+		exit;
+		
+		return $arr['0'];
+	}
 }
 /* End of file jnu_api_model.php */
 /* Location: ./application/models/jnu_api_model.php */
