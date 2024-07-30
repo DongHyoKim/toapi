@@ -65,6 +65,25 @@ class Jnu_api_model extends CI_Model {
 	    return $row['MILEAGE'];
 	}
 
+    function getBalancebybarcodeno($univcode, $barcodeno){
+
+	    global $db;
+	  
+	    $db['default']['database'] = "CPT00116001";
+		
+		$query = "SELECT ISNULL(SUM(MILEAGE), 0) AS MILEAGE FROM MILEAGE WHERE BARCODENO
+		          IN ( SELECT NEWBARCODENO FROM BARCODEHISTORY WHERE BARCODENO 
+				  IN ( SELECT BARCODENO FROM COPARTNER WHERE BarcodeNo = ? AND Status IN ('Y', 'H', 'Z') ) ) AND Status = 'Y'";
+
+		$row   = [];
+	    $results = $this->db->query($query, [$barcodeno]);
+        if ($results->num_rows() > 0) $row = $results->row_array();
+		//echo $this->db->last_query();
+        //exit;
+      
+	    return $row['MILEAGE'];
+	}
+
 	function insertMileage($params) {
       
 		global $db;
@@ -100,6 +119,59 @@ class Jnu_api_model extends CI_Model {
 		
 		return $arr['0'];
 	}
+
+	function execSp($UnivCode, $dbName, $spName, $params_array) {
+      
+		global $db;
+  
+		//print_r($db);
+		//exit;
+  
+		$db['default']['database'] = $dbName;
+		$sp = "[".$dbName."].[dbo]."."[".$spName."]";
+		$params = "";
+  
+		//echo $sp;
+		//echo $dbName;
+		//echo count($params_array);
+		//print_r($params_array);
+		//exit;
+  
+		$i = 0;
+		foreach($params_array as $k => $v){
+			//if(!$v) $params_array[$k] = " ";
+			if($i == count($params_array) - 1){
+				$params .= '"'.$v.'"';
+			} else {
+				  $params .= '"'.$v.'",';
+			}
+			$i++;
+		}
+		
+		//echo $params;
+		//exit;
+  
+		/*
+		foreach($params_array as $key => $value){
+			$params .= '"'.$value.'"';
+			if($key <> "card_no") $params .= ',';
+		}
+		*/	  
+		$sp = $sp." ".$params;
+		$results = $this->db->query($sp);
+  
+		if ($results) {
+			$arr = $results->result_array();
+		} else {
+			$arr = null;   
+		}
+		//echo $this->db->last_query();
+		//print_r($arr['0']);
+		//exit;
+		
+		return $arr['0'];
+	}
+
 }
 /* End of file jnu_api_model.php */
 /* Location: ./application/models/jnu_api_model.php */
