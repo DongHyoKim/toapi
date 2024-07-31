@@ -124,19 +124,10 @@ class Jnu_api_model extends CI_Model {
       
 		global $db;
   
-		//print_r($db);
-		//exit;
-  
 		$db['default']['database'] = $dbName;
 		$sp = "[".$dbName."].[dbo]."."[".$spName."]";
 		$params = "";
-  
-		//echo $sp;
-		//echo $dbName;
-		//echo count($params_array);
-		//print_r($params_array);
-		//exit;
-  
+
 		$i = 0;
 		foreach($params_array as $k => $v){
 			//if(!$v) $params_array[$k] = " ";
@@ -148,15 +139,6 @@ class Jnu_api_model extends CI_Model {
 			$i++;
 		}
 		
-		//echo $params;
-		//exit;
-  
-		/*
-		foreach($params_array as $key => $value){
-			$params .= '"'.$value.'"';
-			if($key <> "card_no") $params .= ',';
-		}
-		*/	  
 		$sp = $sp." ".$params;
 		$results = $this->db->query($sp);
   

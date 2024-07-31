@@ -621,5 +621,75 @@ function cardPaynameSelect($var_arr){
     return $rgResponse;
 }
 
+//AES256 암호화 함수
+function AES256_ENC($str)
+{   
+  //$iv = chr(252).chr(2).chr(4).chr(90).chr(206).chr(75).chr(81).chr(8).chr(101).chr(58).chr(231).chr(100).chr(78).chr(12).chr(61).chr(184);
+  //$iv = str_repeat(chr(0), 16);
+  //$iv = substr(hash('sha256', IV), 0, 32);
+  $iv = IV;
+  //return openssl_encrypt($str, 'AES-256-CBC', KEY_256, 0, KEY_128);
+  //return openssl_encrypt(base64_encode($str), 'AES-256-CBC', KEY_256, 0, $iv);
+  return openssl_encrypt($str, 'AES-256-CBC', KEY_256, 0, $iv);
+  //return $str;
+  //return $str;
+  //252, 2, 4, 90, 206, 75, 81, 8, 101, 58, 231, 100, 78, 12, 61, 184
+  //$aes_value = rawurlencode(openssl_encrypt($aes, 'AES-256-CBC',USER_KEY_AES_KEY,false,str_repeat(chr(0), 16)));  // AES-256 암호화
+
+}
+
+//AES256 복호화 함수
+function AES256_DEC($str)
+{
+  //$iv = chr(252).chr(2).chr(4).chr(90).chr(206).chr(75).chr(81).chr(8).chr(101).chr(58).chr(231).chr(100).chr(78).chr(12).chr(61).chr(184);
+  //$iv = substr(hash('sha256', IV), 0, 32);
+  $iv = IV;
+  //return openssl_decrypt(base64_decode($str), 'AES-256-CBC', KEY_256, 0, $iv);
+  return openssl_decrypt($str, 'AES-256-CBC', KEY_256, 0, $iv);
+    //return $str;
+}
+
+function validate_jwt($token) {
+    //$CI =& get_instance();
+    //$CI->load->config('jwt');
+
+    $jwt = new JWT();
+
+    $key = TOKEN_KEY;
+    try {
+        //$decoded = JWT::decode($token, $key, array('HS256'));
+        $decoded = JWT::decode($token, $key, 'HS256');
+        return (array) $decoded;
+    } catch (Exception $e) {
+        return false;
+    }
+}
+
+function header_token() {
+    $CI =& get_instance();
+    // 헤더에서 토큰 읽기
+    $headers = $CI->input->request_headers();
+    $token = isset($headers['Authorization']) ? $headers['Authorization'] : null;
+
+    // 토큰 검증
+    if ($token) {
+        $token = str_replace('Bearer ', '', $token); // Bearer 제거
+        $decoded = validate_jwt($token);
+
+        if ($decoded) {
+            // 토큰이 유효함
+            return 'TRUE';
+        } else {
+            // 토큰이 유효하지 않음
+            return 'FALSE';
+            //show_error('Invalid token', 401);
+        }
+    } else {
+        // 토큰이 없음
+        return 'NOTOKEN';
+        //show_error('Authorization header not found', 401);
+    }
+}
+
 /* End of file common_helper.php */
 /* Location: ./application/helpers/common_helper.php */

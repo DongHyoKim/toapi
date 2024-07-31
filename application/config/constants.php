@@ -70,5 +70,12 @@ define('INSERTID_CRON', 'CRON');
 define('FLOATZERO', 0.0);
 define('CURL_HOST', 'https://toapi.cway.co.kr/dauapi/receive');
 
+// JWT TokenKey
+define('TOKEN_KEY', 'Kiosk API_0269257490!@#$%^&*');
+define('TOKEN_ID', 'kiosk_api_req');
+define('TOKEN_EXP', '5');  // 토큰만료시간(분)
+define('KEY', 'kiosk@temp^Key2022_%api$');
+define('IV', 'kiosk@temp^Key20');
+
 /* End of file constants.php */
 /* Location: ./application/config/constants.php */

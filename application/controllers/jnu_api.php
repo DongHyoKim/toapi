@@ -7,6 +7,8 @@ class Jnu_api extends CT_Controller {
 	public function __construct(){
 		parent::__construct();
 		$this->load->model('Jnu_api_model','API');
+        $this->load->helper('common_helper');
+        $this->load->helper('jwt_helper');
 		//print_r($this);
         
         header('Access-Control-Allow-Origin: *');
@@ -17,8 +19,94 @@ class Jnu_api extends CT_Controller {
     }
 
     public function index(){
+        $str = "20000736";
+        $enc_str=AES256_ENC($str);
+        $dec_str=AES256_DEC($enc_str);
+        echo("enc_str: ".$enc_str."\n");
+        echo("dec_str: ".$dec_str);
+        exit;
     }
 
+    public function test()
+    {
+        $data_array = [
+            'ch_gubun'    => '001', //채널구분 카카오"001"
+        ];
+        $encode_str  = AES256_ENC(json_encode($data_array,JSON_UNESCAPED_UNICODE));
+        //echo("encode_str:".$encode_str."\n");
+        
+        //$encode = 'H4n3JLQT9vXiVLn1aT6n1bZHRpVLkT\/kciCSHkmfk9g=';  // 엔투 최현우
+        $encode = 'akd2bE5Sd25qclZYZjQ4MllTaVA2enI1ajc1UTJQbXA1WjZ0UlhWekFHYz0='; //김동효
+        $decode = AES256_DEC($encode_str);
+        //echo("decode:".$decode."\n");
+    
+        //$test_json = '{"res_msg": "정상 처리되었습니다.","token_id": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NjY4NDY4MTksImlhdCI6MTY2Njg0NjUxOSwiaWQiOiJqaW5qdV9jaGF0Ym90X2FwaV9yZXEifQ.7YMRueUwxpmdo1OhI-oHpqrqgzSSaV-UmBCgEwEVQUI","kakao_key": "","DATA": "VpZd5I2/kU7klAva3OuApg==","interfaceid": "callChat","res_code": "0000"}';
+        $test_json = '{"res_msg":"정상 처리되었습니다.","token_id":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NjczNjM3NzgsImlhdCI6MTY2NzM2MzQ3OCwiaWQiOiJqaW5qdV9jaGF0Ym90X2FwaV9yZXEifQ.KYquQ4NevTCn32VQifud7sg3YaEIwbnbY_8_S7KBITQ","DATA":"4AudkWoeR8L656iCyY8YakYnabypFi3feKHheXKENVq+ryCgC\/icb8R0nyGoaK3cvk8N5E5HX9FEfWOoNG9Q3LUHu9YzLsbHeekor19Zy4ayXSfD+iQgDHtzP8hjNL7flO5jZmAPNF6cFZG\/r0R7\/bxI4GDoxE7REer1gw6FEbA=","kakao_key":"CTv7EIkbm0M6","interfaceid":"callChat","res_code":"0000"}';
+        $test_arr  = json_decode($test_json,true);
+        $curl_data['res_body']['token_id'] = $test_arr['token_id'];
+        $token_arr = $this->decode_token($curl_data['res_body']['token_id']);
+        $token_yn  = $this->check_token($token_arr);
+        echo("token_arr:");print_r($token_arr);
+        echo("token_yn:");print_r($token_yn);
+        $rec_data_arr = json_decode(AES256_DEC($test_arr['DATA']),true);
+        echo("data:");print_r($rec_data_arr);
+    }
+  
+    public function token()
+    {
+        $jwt = new JWT();
+    
+        $JwtSecretKey = TOKEN_KEY;
+        $data = [
+            'exp' => time() + (TOKEN_EXP * (60*60*24)), // 만료기간(초*분*시간)
+            'iat' => time(),                    // 생성일
+            'id' => TOKEN_ID,
+        ];
+    
+        $token = $jwt->encode($data,$JwtSecretKey,'HS256');
+        echo($token);
+        return $token;
+    }
+  
+    public function decode_token($token)
+    {
+        $jwt = new JWT();
+        $JwtSecretKey = TOKEN_KEY;
+        $token1 = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NjczNjM3NzgsImlhdCI6MTY2NzM2MzQ3OCwiaWQiOiJqaW5qdV9jaGF0Ym90X2FwaV9yZXEifQ.KYquQ4NevTCn32VQifud7sg3YaEIwbnbY_8_S7KBITQ';
+        $decode_token = $jwt->decode($token1,$JwtSecretKey,'HS256');
+    
+        //echo '<pre>';
+        //print_r($decode_token);
+    
+        //$json_token = $jwt->jsonEncode($decode_token);
+        $token_array = (array)$decode_token;
+        return $token_array;
+    }
+  
+    // 수신Token의 유효성검사(1.id 확인 2.유효시간)
+    public function check_token($decode_token_array)
+    {
+        $result_check = '0000';
+    
+        if($decode_token_array['id'] != TOKEN_ID){
+            $result_check = '2003';  // invalid id
+        }
+        if($decode_token_array['exp'] < $decode_token_array['iat']){
+            $result_check = '2004';  // Valid time out
+        }
+        return $result_check;
+    }
+  
+    // 발신토큰 유효성 확인 및 재발급
+    public function pre_check_token($token_id)
+    {
+        // 토큰이 없거나 체크토큰이 유효성이 없으면 신규발행
+        if(empty($token_id) || $this->check_token($token_id) != "0000"){
+            $token_id = $this->token(); //json web token
+        }
+    
+        return $token_id;
+    }    
     
 	public function getBalanceMileage(){
 
@@ -39,6 +127,15 @@ class Jnu_api extends CT_Controller {
         );
         
         writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
+
+        $tokenYn = header_token();
+        if($tokenYn == "NOTOKEN"){
+            show_error('Authorization header not found', 401);
+            exit;
+        } else if($tokenYn == "FALSE"){
+            show_error('Invalid token', 401);
+            exit;
+        }
 
         $univcode   = $this->input->post('univcode',true);   // 대학코드 00116
         $input_type = $this->input->post('input_type',true); // 입력구분 phone/barcodeno
@@ -168,7 +265,16 @@ class Jnu_api extends CT_Controller {
 		*/
 
         writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
-        
+
+        $tokenYn = header_token();
+        if($tokenYn == "NOTOKEN"){
+            show_error('Authorization header not found', 401);
+            exit;
+        } else if($tokenYn == "FALSE"){
+            show_error('Invalid token', 401);
+            exit;
+        }
+
         // 1. POST DATA수신 및 검증
         $univcode    = $this->input->post('univcode',true);     // 대학코드: 00116
         $subunivcode = $this->input->post('subunivcode',true);  // 캠퍼스코드: 001
@@ -321,7 +427,16 @@ class Jnu_api extends CT_Controller {
                             'errorMessage'  => null, ],
         ];
         writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
-        
+
+        $tokenYn = header_token();
+        if($tokenYn == "NOTOKEN"){
+            show_error('Authorization header not found', 401);
+            exit;
+        } else if($tokenYn == "FALSE"){
+            show_error('Invalid token', 401);
+            exit;
+        }
+
         $univcode     = $this->input->post('univcode',true);
 		$sub_univcode = $this->input->post('sub_univcode',true);
 		$card_string  = $this->input->post('card_string',true);
@@ -441,7 +556,16 @@ class Jnu_api extends CT_Controller {
                          'errorMessage'  => null, ],
         ];
         writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
-        
+
+        $tokenYn = header_token();
+        if($tokenYn == "NOTOKEN"){
+            show_error('Authorization header not found', 401);
+            exit;
+        } else if($tokenYn == "FALSE"){
+            show_error('Invalid token', 401);
+            exit;
+        }
+
         $univcode     = $this->input->post('univcode',true);     // 대학코드(5)
 		$sub_univcode = $this->input->post('sub_univcode',true); // 캠퍼스코드(3)
 		$use_date     = $this->input->post('use_date',true);     // 사용일자(8)
@@ -453,7 +577,7 @@ class Jnu_api extends CT_Controller {
 		if (!$univcode) {      
             $message['rCode'] = "0001";
             $message['error']['errorCode'] = "0001";
-            $message['error']['errorMessage'] = "univcode가 Header에 없습니다.";
+            $message['error']['errorMessage'] = "univcode가 없습니다.";
             writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'],JSON_UNESCAPED_UNICODE)." eMessage=".json_encode($message['error']['errorMessage'],JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
             echo json_encode($message,JSON_UNESCAPED_UNICODE);
             exit;
