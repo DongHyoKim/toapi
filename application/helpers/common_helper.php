@@ -649,6 +649,7 @@ function AES256_DEC($str)
     //return $str;
 }
 
+/*
 function validate_jwt($token) {
     //$CI =& get_instance();
     //$CI->load->config('jwt');
@@ -689,6 +690,40 @@ function header_token() {
         return 'NOTOKEN';
         //show_error('Authorization header not found', 401);
     }
+}
+*/
+
+function validate_jwt($token) {
+
+    //$CI =& get_instance();
+    //$headers = $CI->input->request_headers();  // 헬퍼는 $this 사용하지 못함
+    //$token = isset($headers['Authorization']) ? $headers['Authorization'] : null;
+
+    $rtn_arr = [
+        'tokenYn' => 'No-Token',
+    ];
+
+    if(!$token) return $rtn_arr;   // 토큰이 없음
+    $rtn_arr['tokenYn'] = '';
+
+    $jwt = new JWT();
+    $key = TOKEN_KEY;
+    $decoded = JWT::decode($token, $key, 'HS256');
+    $decoded = (array)$decoded;
+
+    if($decoded){
+        if($decoded['id'] != TOKEN_ID){
+            $rtn_arr['tokenYn'] = 'INVALID ID';  // invalid id
+        }
+        //if($decoded['exp'] < time()){                     // 만료시간 초과시
+        if($decoded['iat'] + (TOKEN_EXP * 60) < time()){  // 생성한지 5분 초과시
+            $rtn_arr['tokenYn'] = 'TIME OUT';   // time out
+        }
+        $rtn_arr = array_merge($rtn_arr,$decoded);
+    } else {
+        $rtn_arr['tokenYn'] = 'FALSE';
+    }
+    return $rtn_arr;
 }
 
 /* End of file common_helper.php */

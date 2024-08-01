@@ -58,8 +58,9 @@ class Jnu_api extends CT_Controller {
     
         $JwtSecretKey = TOKEN_KEY;
         $data = [
-            'exp' => time() + (TOKEN_EXP * (60*60*24)), // 만료기간(초*분*시간)
-            'iat' => time(),                    // 생성일
+            //'exp' => time() + (TOKEN_EXP * (60*60*24)), // 만료기간(초*분*시간, 현재 5일
+            'exp' => time() + (TOKEN_EXP * (60)), // 만료기간(초, 현재 5분)
+            'iat' => time(),                            // 생성일
             'id' => TOKEN_ID,
         ];
     
@@ -68,21 +69,22 @@ class Jnu_api extends CT_Controller {
         return $token;
     }
   
-    public function decode_token($token)
+    public function decode_token()
     {
         $jwt = new JWT();
         $JwtSecretKey = TOKEN_KEY;
-        $token1 = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NjczNjM3NzgsImlhdCI6MTY2NzM2MzQ3OCwiaWQiOiJqaW5qdV9jaGF0Ym90X2FwaV9yZXEifQ.KYquQ4NevTCn32VQifud7sg3YaEIwbnbY_8_S7KBITQ';
+        //$token1 = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NjczNjM3NzgsImlhdCI6MTY2NzM2MzQ3OCwiaWQiOiJqaW5qdV9jaGF0Ym90X2FwaV9yZXEifQ.KYquQ4NevTCn32VQifud7sg3YaEIwbnbY_8_S7KBITQ';
+        $token1 = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3MjI4MjA1MjQsImlhdCI6MTcyMjM4ODUyNCwiaWQiOiJraW9za19hcGlfcmVxIn0.44DmSfYpmegKCjznys27jTUqAxjlSkQIiSeefljrM_o';
         $decode_token = $jwt->decode($token1,$JwtSecretKey,'HS256');
     
         //echo '<pre>';
-        //print_r($decode_token);
+        print_r($decode_token);
     
         //$json_token = $jwt->jsonEncode($decode_token);
         $token_array = (array)$decode_token;
         return $token_array;
     }
-  
+
     // 수신Token의 유효성검사(1.id 확인 2.유효시간)
     public function check_token($decode_token_array)
     {
@@ -106,8 +108,8 @@ class Jnu_api extends CT_Controller {
         }
     
         return $token_id;
-    }    
-    
+    }
+
 	public function getBalanceMileage(){
 
     	$logs = array(
@@ -116,7 +118,7 @@ class Jnu_api extends CT_Controller {
             'bLogable'      => true
         );
 
-        $sLogFileId  = time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5);
+        $sLogFileId  = time().'_'.substr(md5(uniqid(rand(), true)), 0, 5);
         $sLogPath    = BASEPATH . '../../logs/jnu_api/' . date('Ymd') . '_getBalanceMileage.log';
         $bLogable    = true;
 
@@ -128,12 +130,27 @@ class Jnu_api extends CT_Controller {
         
         writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
 
-        $tokenYn = header_token();
-        if($tokenYn == "NOTOKEN"){
+        $headers = $this->input->request_headers();
+        $token   = isset($headers['Authorization']) ? $headers['Authorization'] : null;
+        writeLog("[{$sLogFileId}] token=".json_encode($token,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+
+        $token_arr = [];
+        $token_arr = validate_jwt($token);
+        $token_arr['exp'] = date('Y-m-d H:i:s',$token_arr['exp']);
+        $token_arr['iat'] = date('Y-m-d H:i:s',$token_arr['iat']);
+        writeLog("[{$sLogFileId}] token_arr=".json_encode($token_arr,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+
+        if($token_arr['tokenYn'] == "No-Token"){
             show_error('Authorization header not found', 401);
             exit;
-        } else if($tokenYn == "FALSE"){
+        } else if($token_arr['tokenYn'] == "FALSE"){
             show_error('Invalid token', 401);
+            exit;
+        } else if($token_arr['tokenYn'] == "INVALID ID"){
+            show_error('Invalid id', 401);
+            exit;
+        } else if($token_arr['tokenYn'] == "TIME OUT"){
+            show_error('Expiration time error', 401);
             exit;
         }
 
@@ -241,7 +258,7 @@ class Jnu_api extends CT_Controller {
             'bLogable'      => true
         );
 
-        $sLogFileId  = time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5);
+        $sLogFileId  = time().'_'.substr(md5(uniqid(rand(), true)), 0, 5);
         $sLogPath    = BASEPATH . '../../logs/jnu_api/' . date('Ymd') . '_insertMileage.log';
         $bLogable    = true;
 
@@ -266,12 +283,27 @@ class Jnu_api extends CT_Controller {
 
         writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
 
-        $tokenYn = header_token();
-        if($tokenYn == "NOTOKEN"){
+        $headers = $this->input->request_headers();
+        $token   = isset($headers['Authorization']) ? $headers['Authorization'] : null;
+        writeLog("[{$sLogFileId}] token=".json_encode($token,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+
+        $token_arr = [];
+        $token_arr = validate_jwt($token);
+        $token_arr['exp'] = date('Y-m-d H:i:s',$token_arr['exp']);
+        $token_arr['iat'] = date('Y-m-d H:i:s',$token_arr['iat']);
+        writeLog("[{$sLogFileId}] token_arr=".json_encode($token_arr,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+
+        if($token_arr['tokenYn'] == "No-Token"){
             show_error('Authorization header not found', 401);
             exit;
-        } else if($tokenYn == "FALSE"){
+        } else if($token_arr['tokenYn'] == "FALSE"){
             show_error('Invalid token', 401);
+            exit;
+        } else if($token_arr['tokenYn'] == "INVALID ID"){
+            show_error('Invalid id', 401);
+            exit;
+        } else if($token_arr['tokenYn'] == "TIME OUT"){
+            show_error('Expiration time error', 401);
             exit;
         }
 
@@ -417,7 +449,7 @@ class Jnu_api extends CT_Controller {
             'bLogable'      => true
         ];
 
-        $sLogFileId  = time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5);
+        $sLogFileId  = time().'_'.substr(md5(uniqid(rand(), true)), 0, 5);
         $sLogPath    = BASEPATH . '../../logs/jnu_api/' . date('Ymd') . '_check_card_all.log';
         $bLogable    = true;
 
@@ -428,12 +460,27 @@ class Jnu_api extends CT_Controller {
         ];
         writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
 
-        $tokenYn = header_token();
-        if($tokenYn == "NOTOKEN"){
+        $headers = $this->input->request_headers();
+        $token   = isset($headers['Authorization']) ? $headers['Authorization'] : null;
+        writeLog("[{$sLogFileId}] token=".json_encode($token,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+
+        $token_arr = [];
+        $token_arr = validate_jwt($token);
+        $token_arr['exp'] = date('Y-m-d H:i:s',$token_arr['exp']);
+        $token_arr['iat'] = date('Y-m-d H:i:s',$token_arr['iat']);
+        writeLog("[{$sLogFileId}] token_arr=".json_encode($token_arr,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+
+        if($token_arr['tokenYn'] == "No-Token"){
             show_error('Authorization header not found', 401);
             exit;
-        } else if($tokenYn == "FALSE"){
+        } else if($token_arr['tokenYn'] == "FALSE"){
             show_error('Invalid token', 401);
+            exit;
+        } else if($token_arr['tokenYn'] == "INVALID ID"){
+            show_error('Invalid id', 401);
+            exit;
+        } else if($token_arr['tokenYn'] == "TIME OUT"){
+            show_error('Expiration time error', 401);
             exit;
         }
 
@@ -503,6 +550,7 @@ class Jnu_api extends CT_Controller {
                 $message['error']['errorCode'] = "0005";
                 $message['error']['errorMessage'] = $tmp_card_arr['0']." ".$tmp_result['MESSAGE'];
                 writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'],JSON_UNESCAPED_UNICODE)." eMessage=".json_encode($message['error']['errorMessage'],JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+                writeLog("[{$sLogFileId}] -------------------------------- END --------------------------------", $sLogPath, $bLogable);
                 echo json_encode($message,JSON_UNESCAPED_UNICODE);
                 exit;
 	        } else {
@@ -513,8 +561,9 @@ class Jnu_api extends CT_Controller {
 			    if($tmp_result['BALANCEAMT'] < $tmp_card_arr['1']){
                     $message['rCode'] = "0006";
                     $message['error']['errorCode'] = "0006";
-                    $message['error']['errorMessage'] = $tmp_card_arr['0']." 금액 초과".$tmp_result['BALANCEAMT'];
+                    $message['error']['errorMessage'] = $tmp_card_arr['0']." 금액 초과, ".$tmp_result['BALANCEAMT'];
                     writeLog("[{$sLogFileId}] eCode=".json_encode($message['error']['errorCode'],JSON_UNESCAPED_UNICODE)." eMessage=".json_encode($message['error']['errorMessage'],JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+                    writeLog("[{$sLogFileId}] -------------------------------- END --------------------------------", $sLogPath, $bLogable);
                     echo json_encode($message,JSON_UNESCAPED_UNICODE);
                     exit;
 				}
@@ -546,7 +595,7 @@ class Jnu_api extends CT_Controller {
             'bLogable'      => true
         ];
 
-        $sLogFileId  = time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5);
+        $sLogFileId  = time().'_'.substr(md5(uniqid(rand(), true)), 0, 5);
         $sLogPath    = BASEPATH . '../../logs/jnu_api/' . date('Ymd') . '_use_card_all.log';
         $bLogable    = true;
 
@@ -557,12 +606,27 @@ class Jnu_api extends CT_Controller {
         ];
         writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
 
-        $tokenYn = header_token();
-        if($tokenYn == "NOTOKEN"){
+        $headers = $this->input->request_headers();
+        $token   = isset($headers['Authorization']) ? $headers['Authorization'] : null;
+        writeLog("[{$sLogFileId}] token=".json_encode($token,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+
+        $token_arr = [];
+        $token_arr = validate_jwt($token);
+        $token_arr['exp'] = date('Y-m-d H:i:s',$token_arr['exp']);
+        $token_arr['iat'] = date('Y-m-d H:i:s',$token_arr['iat']);
+        writeLog("[{$sLogFileId}] token_arr=".json_encode($token_arr,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+
+        if($token_arr['tokenYn'] == "No-Token"){
             show_error('Authorization header not found', 401);
             exit;
-        } else if($tokenYn == "FALSE"){
+        } else if($token_arr['tokenYn'] == "FALSE"){
             show_error('Invalid token', 401);
+            exit;
+        } else if($token_arr['tokenYn'] == "INVALID ID"){
+            show_error('Invalid id', 401);
+            exit;
+        } else if($token_arr['tokenYn'] == "TIME OUT"){
+            show_error('Expiration time error', 401);
             exit;
         }
 
