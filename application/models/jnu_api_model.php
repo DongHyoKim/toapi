@@ -89,7 +89,7 @@ class Jnu_api_model extends CI_Model {
 		global $db;
  
 		$db['default']['database'] = "CPT".$params['univcode'].$params['subunivcode'];
-		$sp ="CPT".$params['univcode'].$params['subunivcode'].".[dbo].[SP_SERVICE_POS_CPTMILINS]";
+		$sp ="[CPT".$params['univcode'].$params['subunivcode']."].[dbo].[SP_SERVICE_POS_CPTMILINS]";
   
 		$i = 0;
 		$params_str = '';
