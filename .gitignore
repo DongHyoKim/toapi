@@ -2,4 +2,6 @@
 /node_app/
 /table/
 /user_guide/
+/application/downloads/
+/application/logs/
 /application/config/constants.php

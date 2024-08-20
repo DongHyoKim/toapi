@@ -775,6 +775,100 @@ class Jnu_api extends CT_Controller {
         return  $str;
     }
 
+    // NodeJS로 전송된 매출정보 처리
+    function process_file() {
+
+        // $receiveHeader['univcode']
+        $receiveHeader = apache_request_headers();
+        $univcode  = $receiveHeader['univcode'];
+    	
+        $logs = [
+            'sLogFileId'    => time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5),
+            'sLogPath'      => BASEPATH . '../../logs/jnu_api/' . date('Ymd') . '_process_file.log',
+            'bLogable'      => true
+        ];
+
+        $sLogFileId  = time().'_'.substr(md5(uniqid(rand(), true)), 0, 5);
+        $sLogPath    = BASEPATH . '../../logs/jnu_api/' . date('Ymd') . '_process_file.log';
+        $bLogable    = true;
+
+        $file_name = $this->input->get('fileName',true);  // 읽어야할 파일명 예: JNUNI00001-TRANS.240813
+        $file_path = FCPATH.'downloads/'.$file_name;  // 파일 경로 설정 예: application/downloads/JNUNI00001-TRANS.240813
+        writeLog("[{$sLogFileId}] file=".json_encode($file_path,JSON_UNESCAPED_UNICODE),$sLogPath, $bLogable);
+
+        // 파일 라인을 저장할 배열 초기화
+        $lines = [];
+        
+        if (file_exists($file_path)) {    // 파일 열기
+            $file = fopen($file_path, 'r');
+            if ($file) {
+                while (($line = fgets($file)) !== false) {    // 파일의 각 줄을 반복
+                    $lines[] = trim($line);                   // 줄 끝의 공백 제거
+                }
+                fclose($file);    // 파일 닫기
+                $this->process_lines($lines);    // 한 번에 모든 라인을 처리
+                $message = $file_name." 파일 전송완료!";
+                writeLog("[{$sLogFileId}] error=".json_encode($message,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+
+            } else {
+                //echo "파일을 열 수 없습니다.";
+                $message = $file_name." 파일을 열 수 없습니다.";
+                writeLog("[{$sLogFileId}] error=".json_encode($message,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+                exit;
+            }
+        } else {
+            //echo "파일이 존재하지 않습니다.";
+            $message = $file_name." 파일이 존재하지 않습니다.";
+            writeLog("[{$sLogFileId}] error=".json_encode($message,JSON_UNESCAPED_UNICODE), $sLogPath, $bLogable);
+            exit;
+        }
+    }
+
+    function process_line($univcode,$lines,) {
+		
+        $logs = [
+            'sLogFileId'    => time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5),
+            'sLogPath'      => BASEPATH . '../../logs/jnu_api/' . date('Ymd') . '_cron_receive.log',
+            'bLogable'      => true
+        ];
+
+        $sLogFileId  = time() . '_' . substr(md5(uniqid(rand(), true)), 0, 5);
+        $sLogPath    = BASEPATH . '../../logs/jnu_api/' . date('Ymd') . '_cron_receive.log';
+        $bLogable    = true;
+
+        $results = [
+            'success'    => RES_CODE_SUCCESS,
+            'msg'        => '',
+        ];
+
+        try
+        {
+		    writeLog("[{$sLogFileId}] -------------------------------- START --------------------------------", $sLogPath, $bLogable);
+
+		    $yesterday = date('Ymd', $_SERVER['REQUEST_TIME']-86400);
+		    //$yesterday = '20240401';
+
+            $store_code       = $this->API->getStorecode($code_type,$receive_store);
+
+            $params = [
+                'UNIVCODE'    => $univcode,    // 이대
+                'SUBUNIVCODE' => '001',      // 서울캠퍼스
+                'SALEDATE'    => $yesterday,
+                'STORECODE'   => '3000200'   // 김옥길기념관카페
+            ];
+
+		} 
+		catch(File_exception $e) 
+		{
+			$results['success'] = $e->error;
+			$results['msg']     = $e->message;
+		}
+		writeLog("[{$sLogFileId}] -------------------------------- END --------------------------------", $sLogPath, $bLogable);
+		return $results;
+
+        //$this->db->insert('processed_lines', $data);  // 'processed_lines'는 데이터베이스 테이블 이름
+    }
+
 	//주문정보 receive api
     public function ci_ver() {
         echo CI_VERSION;
